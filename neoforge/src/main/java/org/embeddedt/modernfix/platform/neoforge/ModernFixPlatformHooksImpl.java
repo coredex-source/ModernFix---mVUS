@@ -12,7 +12,6 @@ import net.neoforged.fml.ModLoader;
 import net.neoforged.fml.ModLoadingIssue;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.FMLPaths;
-import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.fml.loading.TracingPrintStream;
 import net.neoforged.fml.loading.moddiscovery.ModInfo;
 import net.neoforged.neoforge.common.NeoForge;
