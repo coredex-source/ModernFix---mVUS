@@ -16,28 +16,23 @@ architectury {
 }
 
 group = 'org.embeddedt'
-// If an explicit version is provided (for example in gradle.properties), prefer it.
-if (project.hasProperty('version') && project.version != 'unspecified' && project.version.toString().trim()) {
-    // keep user-specified project.version
-} else {
-    // extract base version from tag, generate other metadata ourselves
-    def details = versionDetails()
-    def plusIndex = details.lastTag.indexOf("+")
-    if(plusIndex == -1) {
-        plusIndex = details.lastTag.length()
-    }
-    def baseVersion = details.lastTag.substring(0, plusIndex)
-    def dirtyMarker = grgit.status().clean ? "" : ".dirty"
-    def commitHashMarker = details.commitDistance > 0 ? ("." + details.gitHash.substring(0, Math.min(4, details.gitHash.length()))) : ""
-    def preMarker = (details.commitDistance > 0 || !details.isCleanTag) ? ("-beta." + details.commitDistance) : ""
-    if(preMarker.length() > 0) {
-        // bump to next patch release
-        def versionParts = baseVersion.tokenize(".")
-        baseVersion = "${versionParts[0]}.${versionParts[1]}.${versionParts[2].toInteger() + 1}"
-    }
-    def versionString = "${baseVersion}${preMarker}+mc${minecraft_version}${commitHashMarker}${dirtyMarker}"
-    version = versionString
+// extract base version from tag, generate other metadata ourselves
+def details = versionDetails()
+def plusIndex = details.lastTag.indexOf("+")
+if(plusIndex == -1) {
+    plusIndex = details.lastTag.length()
 }
+def baseVersion = details.lastTag.substring(0, plusIndex)
+def dirtyMarker = grgit.status().clean ? "" : ".dirty"
+def commitHashMarker = details.commitDistance > 0 ? ("." + details.gitHash.substring(0, Math.min(4, details.gitHash.length()))) : ""
+def preMarker = (details.commitDistance > 0 || !details.isCleanTag) ? ("-beta." + details.commitDistance) : ""
+if(preMarker.length() > 0) {
+    // bump to next patch release
+    def versionParts = baseVersion.tokenize(".")
+    baseVersion = "${versionParts[0]}.${versionParts[1]}.${versionParts[2].toInteger() + 1}"
+}
+def versionString = "${baseVersion}${preMarker}+mc${minecraft_version}${commitHashMarker}${dirtyMarker}"
+version = versionString
 archivesBaseName = rootProject.archives_base_name + '-' + project.name
 
 sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21

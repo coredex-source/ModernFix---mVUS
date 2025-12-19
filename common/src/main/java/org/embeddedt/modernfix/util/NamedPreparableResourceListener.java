@@ -1,6 +1,7 @@
 package org.embeddedt.modernfix.util;
 
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;

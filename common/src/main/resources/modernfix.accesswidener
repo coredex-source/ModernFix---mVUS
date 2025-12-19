@@ -86,6 +86,3 @@ accessible class net/minecraft/client/resources/model/ModelDiscovery$ModelWrappe
 
 accessible field net/minecraft/server/packs/resources/ProfiledReloadInstance$State preparationNanos Ljava/util/concurrent/atomic/AtomicLong;
 accessible field net/minecraft/server/packs/resources/ProfiledReloadInstance$State reloadNanos Ljava/util/concurrent/atomic/AtomicLong;
-
-# For config screen list positioning in MC 1.21.9
-accessible method net/minecraft/client/gui/components/AbstractSelectionList getRowLeft ()I

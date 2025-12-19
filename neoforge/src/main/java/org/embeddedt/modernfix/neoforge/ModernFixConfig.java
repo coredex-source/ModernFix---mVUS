@@ -1,7 +1,7 @@
 package org.embeddedt.modernfix.neoforge;
 
 import com.google.common.collect.ImmutableList;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public class ModernFixConfig {
 
     public static ModConfigSpec.ConfigValue<List<? extends String>> BLACKLIST_ASYNC_JEI_PLUGINS;
 
-    private static Set<ResourceLocation> jeiPluginBlacklist;
+    private static Set<Identifier> jeiPluginBlacklist;
 
     static {
         Predicate<Object> locationValidator = o -> o instanceof String && ((String)o).contains(":");
@@ -30,9 +30,9 @@ public class ModernFixConfig {
         COMMON_CONFIG = COMMON_BUILDER.build();
     }
 
-    public static Set<ResourceLocation> getJeiPluginBlacklist() {
+    public static Set<Identifier> getJeiPluginBlacklist() {
         if(jeiPluginBlacklist == null) {
-            jeiPluginBlacklist = BLACKLIST_ASYNC_JEI_PLUGINS.get().stream().map(ResourceLocation::parse).collect(Collectors.toSet());
+            jeiPluginBlacklist = BLACKLIST_ASYNC_JEI_PLUGINS.get().stream().map(Identifier::parse).collect(Collectors.toSet());
         }
         return jeiPluginBlacklist;
     }

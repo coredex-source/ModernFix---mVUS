@@ -38,7 +38,7 @@ public class ClientBookRegistryMixin {
         for(Book book : BookRegistry.INSTANCE.books.values()) {
             try {
                 BookContents contents = (BookContents)contentsField.get(book);
-                if(contents == null || contents.entries == null)
+                if(contents == null) // Commenting this for now until patchouli ports to Identifier || contents.entries == null)
                     continue;
                 for(BookEntry entry : contents.entries.values()) {
                     for(BookPage page : entry.getPages()) {

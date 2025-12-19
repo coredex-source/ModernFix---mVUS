@@ -9,9 +9,9 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.client.resources.model.ModelIdentifier;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
@@ -54,10 +54,10 @@ public class ModelBakeEventHelper {
     }
     private static final Map<String, UniverseVisibility> MOD_VISIBILITY_CONFIGURATION = ImmutableMap.<String, UniverseVisibility>builder()
             .build();
-    private final Map<ResourceLocation, BakedModel> modelRegistry;
-    private final Set<ResourceLocation> topLevelModelLocations;
+    private final Map<Identifier, BakedModel> modelRegistry;
+    private final Set<Identifier> topLevelModelLocations;
     private final MutableGraph<String> dependencyGraph;
-    public ModelBakeEventHelper(Map<ResourceLocation, BakedModel> modelRegistry) {
+    public ModelBakeEventHelper(Map<Identifier, BakedModel> modelRegistry) {
         this.modelRegistry = modelRegistry;
         this.topLevelModelLocations = new ObjectLinkedOpenHashSet<>();
         // Skip going through ModelLocationCache because most of the accesses will be misses
@@ -67,7 +67,7 @@ public class ModelBakeEventHelper {
                 topLevelModelLocations.add(BlockModelShaper.stateToModelLocation(location, state));
             }
         });
-        BuiltInRegistries.ITEM.keySet().forEach(key -> topLevelModelLocations.add(new ModelResourceLocation(key, "inventory")));
+        BuiltInRegistries.ITEM.keySet().forEach(key -> topLevelModelLocations.add(new ModelIdentifier(key, "inventory")));
         this.topLevelModelLocations.addAll(modelRegistry.keySet());
         this.dependencyGraph = buildDependencyGraph();
     }
@@ -100,10 +100,10 @@ public class ModelBakeEventHelper {
      * @param modId the mod that the event is being fired for
      * @return a wrapper around the model registry
      */
-    private Map<ResourceLocation, BakedModel> createWarningRegistry(String modId) {
-        return new ForwardingInclDefaultsMap<ResourceLocation, BakedModel>() {
+    private Map<Identifier, BakedModel> createWarningRegistry(String modId) {
+        return new ForwardingInclDefaultsMap<Identifier, BakedModel>() {
             @Override
-            protected Map<ResourceLocation, BakedModel> delegate() {
+            protected Map<Identifier, BakedModel> delegate() {
                 return modelRegistry;
             }
 
@@ -111,17 +111,17 @@ public class ModelBakeEventHelper {
                 if(!WARNED_MOD_IDS.add(modId))
                     return;
                 ModernFix.LOGGER.warn("Mod '{}' is accessing Map#keySet/entrySet/values/replaceAll on the model registry map inside its event handler." +
-                        " This probably won't work as expected with dynamic resources on. Prefer using Map#get/put and constructing ModelResourceLocations another way.", modId);
+                        " This probably won't work as expected with dynamic resources on. Prefer using Map#get/put and constructing ModelIdentifiers another way.", modId);
             }
 
             @Override
-            public Set<ResourceLocation> keySet() {
+            public Set<Identifier> keySet() {
                 logWarning();
                 return super.keySet();
             }
 
             @Override
-            public Set<Entry<ResourceLocation, BakedModel>> entrySet() {
+            public Set<Entry<Identifier, BakedModel>> entrySet() {
                 logWarning();
                 return super.entrySet();
             }
@@ -133,14 +133,14 @@ public class ModelBakeEventHelper {
             }
 
             @Override
-            public void replaceAll(BiFunction<? super ResourceLocation, ? super BakedModel, ? extends BakedModel> function) {
+            public void replaceAll(BiFunction<? super Identifier, ? super BakedModel, ? extends BakedModel> function) {
                 logWarning();
                 super.replaceAll(function);
             }
         };
     }
 
-    public Map<ResourceLocation, BakedModel> wrapRegistry(String modId) {
+    public Map<Identifier, BakedModel> wrapRegistry(String modId) {
         var config = MOD_VISIBILITY_CONFIGURATION.getOrDefault(modId, UniverseVisibility.EVERYTHING);
         if (config == UniverseVisibility.NONE) {
             return createWarningRegistry(modId);
@@ -151,7 +151,7 @@ public class ModelBakeEventHelper {
             modIdsToInclude.addAll(this.dependencyGraph.adjacentNodes(modId));
         } catch(IllegalArgumentException ignored) { /* sanity check */ }
         modIdsToInclude.remove("minecraft");
-        Set<ResourceLocation> ourModelLocations;
+        Set<Identifier> ourModelLocations;
         if (config == UniverseVisibility.SELF_AND_DEPS) {
             ourModelLocations = Sets.filter(this.topLevelModelLocations, loc -> modIdsToInclude.contains(loc.getNamespace()));
         } else {
@@ -161,13 +161,13 @@ public class ModelBakeEventHelper {
         return new EmulatedModelRegistry(modId, modIdsToInclude, missingModel, ourModelLocations);
     }
 
-    public class EmulatedModelRegistry extends ForwardingMap<ResourceLocation, BakedModel> {
+    public class EmulatedModelRegistry extends ForwardingMap<Identifier, BakedModel> {
         private final Set<String> modIdsToInclude;
         private final BakedModel missingModel;
-        private final Set<ResourceLocation> ourModelLocations;
+        private final Set<Identifier> ourModelLocations;
         private final String modId;
 
-        private EmulatedModelRegistry(String modId, Set<String> modIdsToInclude, BakedModel missingModel, Set<ResourceLocation> ourModelLocations) {
+        private EmulatedModelRegistry(String modId, Set<String> modIdsToInclude, BakedModel missingModel, Set<Identifier> ourModelLocations) {
             this.modId = modId;
             this.modIdsToInclude = modIdsToInclude;
             this.missingModel = missingModel;
@@ -175,14 +175,14 @@ public class ModelBakeEventHelper {
         }
 
         @Override
-        protected Map<ResourceLocation, BakedModel> delegate() {
+        protected Map<Identifier, BakedModel> delegate() {
             return modelRegistry;
         }
 
         @Override
         public BakedModel get(@Nullable Object key) {
             BakedModel model = super.get(key);
-            if(model == null && key != null && modIdsToInclude.contains(((ResourceLocation)key).getNamespace())) {
+            if(model == null && key != null && modIdsToInclude.contains(((Identifier)key).getNamespace())) {
                 ModernFix.LOGGER.warn("Model {} is missing, but was requested in model bake event. Returning missing model", key);
                 return missingModel;
             }
@@ -190,7 +190,7 @@ public class ModelBakeEventHelper {
         }
 
         @Override
-        public Set<ResourceLocation> keySet() {
+        public Set<Identifier> keySet() {
             return Collections.unmodifiableSet(ourModelLocations);
         }
 
@@ -200,15 +200,15 @@ public class ModelBakeEventHelper {
         }
 
         @Override
-        public Set<Entry<ResourceLocation, BakedModel>> entrySet() {
+        public Set<Entry<Identifier, BakedModel>> entrySet() {
             return new DynamicModelEntrySet(this, ourModelLocations);
         }
 
         @Override
-        public void replaceAll(BiFunction<? super ResourceLocation, ? super BakedModel, ? extends BakedModel> function) {
+        public void replaceAll(BiFunction<? super Identifier, ? super BakedModel, ? extends BakedModel> function) {
             ModernFix.LOGGER.warn("Mod '{}' is calling replaceAll on the model registry. Some hacks will be used to keep this fast, but they may not be 100% compatible.", modId);
-            List<ResourceLocation> locations = new ArrayList<>(ourModelLocations);
-            for(ResourceLocation location : locations) {
+            List<Identifier> locations = new ArrayList<>(ourModelLocations);
+            for(Identifier location : locations) {
                 /*
                  * Fetching every model is insanely slow. So we call the function with a null object first, since it
                  * probably isn't expecting that. If we get an exception thrown, or it returns nonnull, then we know
@@ -231,17 +231,17 @@ public class ModelBakeEventHelper {
         }
     }
 
-    private static class DynamicModelEntrySet extends AbstractSet<Map.Entry<ResourceLocation, BakedModel>> {
-        private final Map<ResourceLocation, BakedModel> modelRegistry;
-        private final Set<ResourceLocation> modelLocations;
+    private static class DynamicModelEntrySet extends AbstractSet<Map.Entry<Identifier, BakedModel>> {
+        private final Map<Identifier, BakedModel> modelRegistry;
+        private final Set<Identifier> modelLocations;
 
-        private DynamicModelEntrySet(Map<ResourceLocation, BakedModel> modelRegistry, Set<ResourceLocation> modelLocations) {
+        private DynamicModelEntrySet(Map<Identifier, BakedModel> modelRegistry, Set<Identifier> modelLocations) {
             this.modelRegistry = modelRegistry;
             this.modelLocations = modelLocations;
         }
 
         @Override
-        public Iterator<Map.Entry<ResourceLocation, BakedModel>> iterator() {
+        public Iterator<Map.Entry<Identifier, BakedModel>> iterator() {
             var iter = this.modelLocations.iterator();
             return new Iterator<>() {
                 @Override
@@ -250,7 +250,7 @@ public class ModelBakeEventHelper {
                 }
 
                 @Override
-                public Map.Entry<ResourceLocation, BakedModel> next() {
+                public Map.Entry<Identifier, BakedModel> next() {
                     return new DynamicModelEntry(iter.next());
                 }
             };
@@ -275,15 +275,15 @@ public class ModelBakeEventHelper {
             throw new UnsupportedOperationException();
         }
 
-        private class DynamicModelEntry implements Map.Entry<ResourceLocation, BakedModel> {
-            private final ResourceLocation location;
+        private class DynamicModelEntry implements Map.Entry<Identifier, BakedModel> {
+            private final Identifier location;
 
-            private DynamicModelEntry(ResourceLocation location) {
+            private DynamicModelEntry(Identifier location) {
                 this.location = location;
             }
 
             @Override
-            public ResourceLocation getKey() {
+            public Identifier getKey() {
                 return this.location;
             }
 

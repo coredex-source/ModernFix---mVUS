@@ -17,11 +17,12 @@ import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.MissingItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
 import net.minecraft.client.renderer.texture.SpriteLoader;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
@@ -30,6 +31,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import org.embeddedt.modernfix.ModernFix;
+import org.embeddedt.modernfix.common.mixin.perf.dynamic_resources.BlockStateDefinitionsAccessor;
+import org.embeddedt.modernfix.common.mixin.perf.dynamic_resources.BlockStateModelLoaderMixin;
+import org.embeddedt.modernfix.common.mixin.perf.dynamic_resources.ModelWrapperInvoker;
 import org.embeddedt.modernfix.duck.IModelHoldingBlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,26 +60,26 @@ import java.util.function.Supplier;
  * Handles loading models dynamically, rather than at startup time.
  */
 public class DynamicModelProvider {
-    private final LoadingCache<ResourceLocation, Optional<BlockStateModelLoader.LoadedModels>> loadedStateDefinitions =
+    private final LoadingCache<Identifier, Optional<BlockStateModelLoader.LoadedModels>> loadedStateDefinitions =
             this.makeLoadingCache(this::loadBlockStateDefinition);
 
-    private final LoadingCache<ResourceLocation, Optional<UnbakedModel>> loadedBlockModels =
+    private final LoadingCache<Identifier, Optional<UnbakedModel>> loadedBlockModels =
             this.makeLoadingCache(this::loadBlockModel);
 
-    private final LoadingCache<ResourceLocation, Optional<ModelDiscovery.ModelWrapper>> resolvedBlockModels =
+    private final LoadingCache<Identifier, Optional<ModelDiscovery.ModelWrapper>> resolvedBlockModels =
             this.makeLoadingCache(this::resolveBlockModel);
 
     private final LoadingCache<BlockState, Optional<BlockStateModel>> loadedBakedModels =
             this.makeLoadingCache(this::loadBakedModel);
 
-    private final LoadingCache<ResourceLocation, Optional<ClientItem>> loadedClientItemProperties =
+    private final LoadingCache<Identifier, Optional<ClientItem>> loadedClientItemProperties =
             this.makeLoadingCache(this::loadClientItemProperties);
 
-    private final LoadingCache<ResourceLocation, Optional<ItemModel>> loadedItemModels =
+    private final LoadingCache<Identifier, Optional<ItemModel>> loadedItemModels =
             this.makeLoadingCache(this::loadItemModel);
 
     /*
-    private final LoadingCache<ResourceLocation, Optional<BakedModel>> loadedStandaloneModels =
+    private final LoadingCache<Identifier, Optional<BakedModel>> loadedStandaloneModels =
             this.makeLoadingCache(this::loadStandaloneModel);
 
      */
@@ -84,17 +88,18 @@ public class DynamicModelProvider {
     private final ModelDiscovery.ModelWrapper resolvedMissingModel;
     private final ItemModel missingItemModel;
     private final UnbakedModel unbakedMissingModel;
-    private final Function<ResourceLocation, StateDefinition<Block, BlockState>> stateMapper;
+    private final Function<Identifier, StateDefinition<Block, BlockState>> stateMapper;
     private final ResourceManager resourceManager;
     private final SpriteGetter textureGetter;
     private final EntityModelSet entityModelSet;
     private final ItemModelGenerator itemModelGenerator;
     private final PlayerSkinRenderCache skinRenderCache;
     private final MaterialSet materialSet;
+    private final ModelBaker.PartCache partCache;
 
     private final Map<BlockState, BlockStateModel> mrlModelOverrides = new ConcurrentHashMap<>();
-    private final Map<ResourceLocation, ItemModel> itemStackModelOverrides = new ConcurrentHashMap<>();
-    //private final Map<ResourceLocation, BakedModel> standaloneModelOverrides = new ConcurrentHashMap<>();
+    private final Map<Identifier, ItemModel> itemStackModelOverrides = new ConcurrentHashMap<>();
+    //private final Map<Identifier, BakedModel> standaloneModelOverrides = new ConcurrentHashMap<>();
     private final Map<BlockState, BlockStateModel.Unbaked> unbakedBlockStateModelOverrides = new ConcurrentHashMap<>();
 
     private final List<DynamicModelProvider.DynamicModelPlugin> pluginList = new ArrayList<>();
@@ -102,38 +107,64 @@ public class DynamicModelProvider {
     private static final boolean DEBUG_DYNAMIC_MODEL_LOADING = Boolean.getBoolean("modernfix.debugDynamicModelLoading");
 
     public DynamicModelProvider(ResourceManager resourceManager, EntityModelSet entityModelSet,
-                                SpriteLoader.Preparations preparations, PlayerSkinRenderCache skinRenderCache, MaterialSet materialSet) {
+                                SpriteLoader.Preparations blockPreparations, SpriteLoader.Preparations itemPreparations,
+                                PlayerSkinRenderCache skinRenderCache, MaterialSet materialSet) {
         this.unbakedMissingModel = MissingBlockModel.missingModel();
         this.entityModelSet = entityModelSet;
         this.skinRenderCache = skinRenderCache;
         this.materialSet = materialSet;
-        var missing = preparations.missing();
+        this.partCache = new DynamicPartCache();
 
         this.textureGetter = new SpriteGetter() {
             @Override
             public @NotNull TextureAtlasSprite get(Material material, ModelDebugName modelDebugName) {
-                var sprite = preparations.getSprite(material.texture());
+                Identifier atlas = material.atlasLocation();
+
+                Boolean blockOrItemAtlas = atlas.equals(ModelManager.BLOCK_OR_ITEM);
+                Boolean itemAtlas = atlas.equals(TextureAtlas.LOCATION_ITEMS);
+                Boolean blockAtlas = atlas.equals(TextureAtlas.LOCATION_BLOCKS);
+
+                TextureAtlasSprite sprite = null;
+
+                if (blockOrItemAtlas || itemAtlas) {
+                    sprite = itemPreparations.getSprite(material.texture());
+                }
+
+                if (sprite == null && (blockOrItemAtlas || blockAtlas)) {
+                    sprite = blockPreparations.getSprite(material.texture());
+                }
+
                 if (sprite != null) {
                     return sprite;
                 } else {
                     ModernFix.LOGGER.warn("Unable to find sprite '{}' referenced by model '{}'", material.texture(), modelDebugName.debugName());
-                    return missing;
+                    if (!blockOrItemAtlas && !blockAtlas && !itemAtlas) {
+                        ModernFix.LOGGER.warn(" -> Requested atlas ID '{}' was not part of the item or block atlas", atlas);
+                    }
+                    return itemAtlas ? itemPreparations.missing() : blockPreparations.missing();
                 }
             }
 
             @Override
             public @NotNull TextureAtlasSprite reportMissingReference(String string, ModelDebugName modelDebugName) {
-                return missing;
+                return blockPreparations.missing();
             }
         };
+
         this.stateMapper = BlockStateDefinitions.definitionLocationToBlockStateMapper();
         this.resourceManager = resourceManager;
         this.itemModelGenerator = new ItemModelGenerator();
-        this.resolvedMissingModel = new ModelDiscovery.ModelWrapper(MissingBlockModel.LOCATION, this.unbakedMissingModel, true);
+        this.resolvedMissingModel = ModelWrapperInvoker.mfix$invokeCtor(MissingBlockModel.LOCATION, this.unbakedMissingModel, true);
         var missingModelBaker = new ModelBaker() {
             @Override
-            public ResolvedModel getModel(ResourceLocation resourceLocation) {
+            public ResolvedModel getModel(Identifier Identifier) {
                 throw new IllegalStateException("Missing model should not have dependencies");
+            }
+
+            @Override
+            public BlockModelPart missingBlockModelPart() {
+                // Vanilla also throws an exception in this case
+                throw new IllegalStateException("Asked for missing model's missing model parts!");
             }
 
             @Override
@@ -142,12 +173,17 @@ public class DynamicModelProvider {
             }
 
             @Override
+            public PartCache parts() {
+                return DynamicModelProvider.this.partCache;
+            }
+
+            @Override
             public <T> T compute(SharedOperationKey<T> key) {
                 return key.compute(this);
             }
         };
         var textureSlots = this.resolvedMissingModel.getTopTextureSlots();
-        var quadCollection = this.resolvedMissingModel.bakeTopGeometry(textureSlots, missingModelBaker, BlockModelRotation.X0_Y0);
+        var quadCollection = this.resolvedMissingModel.bakeTopGeometry(textureSlots, missingModelBaker, BlockModelRotation.IDENTITY);
         var particleSprite = this.resolvedMissingModel.resolveParticleSprite(textureSlots, missingModelBaker);
         this.missingModel = new BlockStateModel() {
             @Override
@@ -174,7 +210,7 @@ public class DynamicModelProvider {
             public TextureAtlasSprite particleIcon() {
                 return particleSprite;
             }
-        }; //SimpleModelWrapper(quadCollection, resolvedMissingModel.getTopAmbientOcclusion(), particleSprite);
+        };
         this.missingItemModel = new MissingItemModel(quadCollection.getAll(), new ModelRenderProperties(resolvedMissingModel.getTopGuiLight().lightLikeBlock(), particleSprite, resolvedMissingModel.getTopTransforms()));
         try {
             Class.forName("net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin");
@@ -183,6 +219,36 @@ public class DynamicModelProvider {
         } catch(Exception ignored) {
             // Fabric API likely not present
         }
+
+        // Fix item frames because they use a fake air BlockState
+        Map<Identifier, StateDefinition<Block, BlockState>> static_definitions = BlockStateDefinitionsAccessor.getStaticDefinitions();
+
+        for (var definition : static_definitions.entrySet()) {
+            StateDefinition<Block, BlockState> fakeStateDefinitions = definition.getValue();
+            Identifier identifier = definition.getKey();
+            Identifier modelIdentifier = identifier.withPath("block/"+identifier.getPath());
+
+            Optional<UnbakedModel> unbakedModel = this.loadedBlockModels.getUnchecked(modelIdentifier);
+
+            for (var fakeState : fakeStateDefinitions.getPossibleStates()) {
+                Optional<BlockStateModel> bakedModel = unbakedModel.flatMap(model -> {
+                    var optLoadedModels = this.loadedStateDefinitions.getUnchecked(identifier);
+                    return optLoadedModels
+                            .map(loadedModels -> loadedModels.models().get(fakeState))
+                            .map(unbakedRoot -> this.bakeModel(unbakedRoot, fakeState));
+                });
+
+                if (bakedModel.isPresent()) {
+                    this.mrlModelOverrides.put(fakeState, bakedModel.get());
+                } else {
+                    ModernFix.LOGGER.error(
+                            "Failed to load BlockStateModel for static definition {}, state {}",
+                            identifier, fakeState
+                    );
+                }
+            }
+        }
+        ModernFix.LOGGER.info("Loaded {} BlockState -> BlockStateModel overrides", this.mrlModelOverrides.size());
     }
 
     public BlockStateModel getMissingBakedModel() {
@@ -225,17 +291,17 @@ public class DynamicModelProvider {
     }
 
     /*
-    public Map<ResourceLocation, BakedModel> getStandaloneEmulatedRegistry() {
-        return new EmulatedRegistry<>(ResourceLocation.class, this.loadedStandaloneModels, Set::of, this.standaloneModelOverrides);
+    public Map<Identifier, BakedModel> getStandaloneEmulatedRegistry() {
+        return new EmulatedRegistry<>(Identifier.class, this.loadedStandaloneModels, Set::of, this.standaloneModelOverrides);
     }
      */
 
-    public Map<ResourceLocation, ItemModel> getItemModelEmulatedRegistry() {
-        return new EmulatedRegistry<>(ResourceLocation.class, this.loadedItemModels, BuiltInRegistries.ITEM::keySet, this.itemStackModelOverrides);
+    public Map<Identifier, ItemModel> getItemModelEmulatedRegistry() {
+        return new EmulatedRegistry<>(Identifier.class, this.loadedItemModels, BuiltInRegistries.ITEM::keySet, this.itemStackModelOverrides);
     }
 
-    public Map<ResourceLocation, ClientItem.Properties> getItemPropertiesEmulatedRegistry() {
-        return Maps.transformValues(new EmulatedRegistry<>(ResourceLocation.class, this.loadedClientItemProperties, BuiltInRegistries.ITEM::keySet, Map.of()), ClientItem::properties);
+    public Map<Identifier, ClientItem.Properties> getItemPropertiesEmulatedRegistry() {
+        return Maps.transformValues(new EmulatedRegistry<>(Identifier.class, this.loadedClientItemProperties, BuiltInRegistries.ITEM::keySet, Map.of()), ClientItem::properties);
     }
 
     private <K, V> LoadingCache<K, Optional<V>> makeLoadingCache(Function<K, Optional<V>> loadingFunction) {
@@ -394,7 +460,7 @@ public class DynamicModelProvider {
         }
     }
 
-    private Optional<BlockStateModelLoader.LoadedModels> loadBlockStateDefinition(ResourceLocation location) {
+    private Optional<BlockStateModelLoader.LoadedModels> loadBlockStateDefinition(Identifier location) {
         StateDefinition<Block, BlockState> stateDefinition = this.stateMapper.apply(location);
         if(stateDefinition == null) {
             return Optional.empty();
@@ -402,7 +468,7 @@ public class DynamicModelProvider {
         if (DEBUG_DYNAMIC_MODEL_LOADING) {
             ModernFix.LOGGER.info("Loading blockstate definition '{}'", location);
         }
-        List<Resource> resources = resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(location.getNamespace(), "blockstates/" + location.getPath() + ".json"));
+        List<Resource> resources = resourceManager.getResourceStack(Identifier.fromNamespaceAndPath(location.getNamespace(), "blockstates/" + location.getPath() + ".json"));
         List<BlockStateModelLoader.LoadedBlockModelDefinition> loadedDefinitions = new ArrayList<>(resources.size());
         for(Resource resource : resources) {
             try(Reader reader = resource.openAsReader()) {
@@ -413,7 +479,7 @@ public class DynamicModelProvider {
                 ModernFix.LOGGER.error("Failed to load blockstate definition {} from pack '{}'", location, resource.sourcePackId(), e);
             }
         }
-        var loadedModels = new HashMap<>(BlockStateModelLoader.loadBlockStateDefinitionStack(location, stateDefinition, loadedDefinitions).models());
+        var loadedModels = new HashMap<>(BlockStateModelLoaderMixin.mfix$invokeLoadBlockStateDefinitionStack(location, stateDefinition, loadedDefinitions).models());
         if (!pluginList.isEmpty()) {
             loadedModels.replaceAll((mrl, oldModel) -> {
                 BlockStateModel.UnbakedRoot ubm = oldModel;
@@ -455,7 +521,7 @@ public class DynamicModelProvider {
             Optional<BlockStateModel.UnbakedRoot> unbakedModelOpt = Optional.ofNullable(this.unbakedBlockStateModelOverrides.get(state))
                     .map(BlockStateModel.Unbaked::asRoot);
             if (unbakedModelOpt.isEmpty()) {
-                var optLoadedModels = this.loadedStateDefinitions.getUnchecked(state.getBlock().builtInRegistryHolder().key().location());
+                var optLoadedModels = this.loadedStateDefinitions.getUnchecked(state.getBlock().builtInRegistryHolder().key().identifier());
                 unbakedModelOpt = optLoadedModels.map(loadedModels -> loadedModels.models().get(state));
             }
             return unbakedModelOpt.map(unbakedModel -> {
@@ -465,7 +531,7 @@ public class DynamicModelProvider {
     }
 
     /*
-    private Optional<BakedModel> loadStandaloneModel(ResourceLocation location) {
+    private Optional<BakedModel> loadStandaloneModel(Identifier location) {
         var override = this.standaloneModelOverrides.get(location);
         if (override != null) {
             return Optional.of(override);
@@ -476,7 +542,7 @@ public class DynamicModelProvider {
     }
      */
 
-    private Optional<UnbakedModel> loadBlockModelDefault(ResourceLocation location) {
+    private Optional<UnbakedModel> loadBlockModelDefault(Identifier location) {
         if (DEBUG_DYNAMIC_MODEL_LOADING) {
             ModernFix.LOGGER.info("Loading block model '{}'", location);
         }
@@ -485,7 +551,7 @@ public class DynamicModelProvider {
         } else if (location.equals(MissingBlockModel.LOCATION)) {
             return Optional.of(this.unbakedMissingModel);
         }
-        var resource = this.resourceManager.getResource(ResourceLocation.fromNamespaceAndPath(location.getNamespace(), "models/" + location.getPath() + ".json"));
+        var resource = this.resourceManager.getResource(Identifier.fromNamespaceAndPath(location.getNamespace(), "models/" + location.getPath() + ".json"));
         if(resource.isPresent()) {
             try(Reader reader = resource.get().openAsReader()) {
                 BlockModel blockModel = BlockModel.fromStream(reader);
@@ -500,7 +566,7 @@ public class DynamicModelProvider {
         }
     }
 
-    private Optional<UnbakedModel> loadBlockModel(ResourceLocation location) {
+    private Optional<UnbakedModel> loadBlockModel(Identifier location) {
         Optional<UnbakedModel> value = loadBlockModelDefault(location);
         for (var plugin : this.pluginList) {
             value = plugin.modifyModelOnLoad(value, location);
@@ -508,12 +574,12 @@ public class DynamicModelProvider {
         return value;
     }
 
-    private Optional<ModelDiscovery.ModelWrapper> resolveBlockModel(ResourceLocation location) {
+    private Optional<ModelDiscovery.ModelWrapper> resolveBlockModel(Identifier location) {
         var unbakedOpt = this.loadedBlockModels.getUnchecked(location);
         if (unbakedOpt.isEmpty()) {
             return Optional.empty();
         }
-        ModelDiscovery.ModelWrapper wrapper = new ModelDiscovery.ModelWrapper(location, unbakedOpt.get(), true);
+        ModelDiscovery.ModelWrapper wrapper = ModelWrapperInvoker.mfix$invokeCtor(location, unbakedOpt.get(), true);
         var parent = wrapper.wrapped().parent();
         if (parent != null) {
             Optional<ModelDiscovery.ModelWrapper> resolvedParentOpt;
@@ -532,11 +598,11 @@ public class DynamicModelProvider {
     }
 
 
-    private Optional<ClientItem> loadClientItemProperties(ResourceLocation location) {
+    private Optional<ClientItem> loadClientItemProperties(Identifier location) {
         if (DEBUG_DYNAMIC_MODEL_LOADING) {
             ModernFix.LOGGER.info("Loading client item '{}'", location);
         }
-        var resource = this.resourceManager.getResource(ResourceLocation.fromNamespaceAndPath(location.getNamespace(), "items/" + location.getPath() + ".json"));
+        var resource = this.resourceManager.getResource(Identifier.fromNamespaceAndPath(location.getNamespace(), "items/" + location.getPath() + ".json"));
         if(resource.isPresent()) {
             try(Reader reader = resource.get().openAsReader()) {
                 ClientItem clientItem = ClientItem.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader)).getOrThrow();
@@ -551,7 +617,7 @@ public class DynamicModelProvider {
         }
     }
 
-    private Optional<ItemModel> loadItemModel(ResourceLocation location) {
+    private Optional<ItemModel> loadItemModel(Identifier location) {
         if (DEBUG_DYNAMIC_MODEL_LOADING) {
             ModernFix.LOGGER.info("Loading item model '{}'", location);
         }
@@ -565,20 +631,24 @@ public class DynamicModelProvider {
         });
     }
 
+    LoadingCache<BlockState, Optional<BlockStateModel>> getBlockStateCache() {
+        return this.loadedBakedModels;
+    }
+
     /* IntelliJ says these are unused, commenting them for now
     public BlockStateModel getModel(BlockState location) {
         return this.loadedBakedModels.getUnchecked(location).orElse(this.missingModel);
     }
 
-    public ClientItem.Properties getClientItemProperties(ResourceLocation location) {
+    public ClientItem.Properties getClientItemProperties(Identifier location) {
         return this.loadedClientItemProperties.getUnchecked(location).map(ClientItem::properties).orElse(ClientItem.Properties.DEFAULT);
     }
 
-    public ItemModel getItemModel(ResourceLocation location) {
+    public ItemModel getItemModel(Identifier location) {
         return this.loadedItemModels.getUnchecked(location).orElse(this.missingItemModel);
     }
 
-    public BakedModel getStandaloneModel(ResourceLocation location) {
+    public BakedModel getStandaloneModel(Identifier location) {
         return this.loadedStandaloneModels.getUnchecked(location).orElse(this.missingModel);
     }
 
@@ -595,13 +665,23 @@ public class DynamicModelProvider {
         }
 
         @Override
-        public ResolvedModel getModel(ResourceLocation location) {
+        public ResolvedModel getModel(Identifier location) {
             return DynamicModelProvider.this.resolvedBlockModels.getUnchecked(location).orElse(DynamicModelProvider.this.resolvedMissingModel);
+        }
+
+        @Override
+        public BlockModelPart missingBlockModelPart() {
+            return null;
         }
 
         @Override
         public SpriteGetter sprites() {
             return DynamicModelProvider.this.textureGetter;
+        }
+
+        @Override
+        public PartCache parts() {
+            return partCache;
         }
 
         @Override
@@ -617,11 +697,11 @@ public class DynamicModelProvider {
     }
 
     public interface DynamicModelPlugin {
-        Optional<UnbakedModel> modifyModelOnLoad(Optional<UnbakedModel> model, ResourceLocation id);
+        Optional<UnbakedModel> modifyModelOnLoad(Optional<UnbakedModel> model, Identifier id);
         BlockStateModel.UnbakedRoot modifyBlockModelOnLoad(BlockStateModel.UnbakedRoot model, BlockState state);
 
-        UnbakedModel modifyModelBeforeBake(UnbakedModel model, ResourceLocation id, ModelState state, ModelBaker baker);
-        //BakedModel modifyModelAfterBake(BakedModel bakedModel, UnbakedModel model, ResourceLocation id, ModelState state, ModelBaker baker);
+        UnbakedModel modifyModelBeforeBake(UnbakedModel model, Identifier id, ModelState state, ModelBaker baker);
+        //BakedModel modifyModelAfterBake(BakedModel bakedModel, UnbakedModel model, Identifier id, ModelState state, ModelBaker baker);
 
         BlockStateModel.UnbakedRoot modifyBlockModelBeforeBake(BlockStateModel.UnbakedRoot model, BlockState state, ModelBaker baker);
         BlockStateModel modifyBlockModelAfterBake(BlockStateModel bakedModel, BlockStateModel.UnbakedRoot unbaked, BlockState state, ModelBaker baker);

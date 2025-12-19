@@ -10,10 +10,10 @@
 //import net.minecraft.client.renderer.block.model.UnbakedBlockStateModel;
 //import net.minecraft.client.resources.model.BakedModel;
 //import net.minecraft.client.resources.model.ModelBaker;
-//import net.minecraft.client.resources.model.ModelResourceLocation;
+//import net.minecraft.client.resources.model.ModelIdentifier;
 //import net.minecraft.client.resources.model.ModelState;
 //import net.minecraft.client.resources.model.UnbakedModel;
-//import net.minecraft.resources.ResourceLocation;
+//import net.minecraft.resources.Identifier;
 //import net.minecraft.server.packs.resources.ResourceManager;
 //import net.minecraft.world.level.block.Block;
 //import net.minecraft.world.level.block.state.BlockState;
@@ -30,7 +30,7 @@
 //public class FabricDynamicModelHandler implements DynamicModelProvider.DynamicModelPlugin {
 //    // Borrowed from Fabric API, this dispatching logic is extremely trivial
 //
-//    private static final ResourceLocation[] MODEL_MODIFIER_PHASES = new ResourceLocation[] { ModelModifier.OVERRIDE_PHASE, ModelModifier.DEFAULT_PHASE, ModelModifier.WRAP_PHASE, ModelModifier.WRAP_LAST_PHASE };
+//    private static final Identifier[] MODEL_MODIFIER_PHASES = new Identifier[] { ModelModifier.OVERRIDE_PHASE, ModelModifier.DEFAULT_PHASE, ModelModifier.WRAP_PHASE, ModelModifier.WRAP_LAST_PHASE };
 //
 //    private final Event<ModelModifier.OnLoad> onLoadModifiers = EventFactory.createWithPhases(ModelModifier.OnLoad.class, modifiers -> (model, context) -> {
 //        for (ModelModifier.OnLoad modifier : modifiers) {
@@ -130,15 +130,15 @@
 //    }
 //
 //    @Override
-//    public Optional<UnbakedModel> modifyModelOnLoad(Optional<UnbakedModel> model, ResourceLocation id) {
+//    public Optional<UnbakedModel> modifyModelOnLoad(Optional<UnbakedModel> model, Identifier id) {
 //        return Optional.ofNullable(this.onLoadModifiers.invoker().modifyModelOnLoad(model.orElse(null), () -> id));
 //    }
 //
 //    @Override
-//    public UnbakedBlockStateModel modifyBlockModelOnLoad(UnbakedBlockStateModel model, ModelResourceLocation id, BlockState state) {
+//    public UnbakedBlockStateModel modifyBlockModelOnLoad(UnbakedBlockStateModel model, ModelIdentifier id, BlockState state) {
 //        return this.onLoadBlockModifiers.invoker().modifyModelOnLoad(model, new ModelModifier.OnLoadBlock.Context() {
 //            @Override
-//            public ModelResourceLocation id() {
+//            public ModelIdentifier id() {
 //                return id;
 //            }
 //
@@ -150,10 +150,10 @@
 //    }
 //
 //    @Override
-//    public UnbakedModel modifyModelBeforeBake(UnbakedModel model, ResourceLocation id, ModelState state, ModelBaker baker) {
+//    public UnbakedModel modifyModelBeforeBake(UnbakedModel model, Identifier id, ModelState state, ModelBaker baker) {
 //        return beforeBakeModifiers.invoker().modifyModelBeforeBake(model, new ModelModifier.BeforeBake.Context() {
 //            @Override
-//            public ResourceLocation id() {
+//            public Identifier id() {
 //                return id;
 //            }
 //
@@ -170,10 +170,10 @@
 //    }
 //
 //    @Override
-//    public BakedModel modifyModelAfterBake(BakedModel bakedModel, UnbakedModel model, ResourceLocation id, ModelState state, ModelBaker baker) {
+//    public BakedModel modifyModelAfterBake(BakedModel bakedModel, UnbakedModel model, Identifier id, ModelState state, ModelBaker baker) {
 //        return afterBakeModifiers.invoker().modifyModelAfterBake(bakedModel, new ModelModifier.AfterBake.Context() {
 //            @Override
-//            public ResourceLocation id() {
+//            public Identifier id() {
 //                return id;
 //            }
 //
@@ -195,10 +195,10 @@
 //    }
 //
 //    @Override
-//    public UnbakedBlockStateModel modifyBlockModelBeforeBake(UnbakedBlockStateModel model, ModelResourceLocation id, ModelBaker baker) {
+//    public UnbakedBlockStateModel modifyBlockModelBeforeBake(UnbakedBlockStateModel model, ModelIdentifier id, ModelBaker baker) {
 //        return beforeBakeBlockModifiers.invoker().modifyModelBeforeBake(model, new ModelModifier.BeforeBakeBlock.Context() {
 //            @Override
-//            public ModelResourceLocation id() {
+//            public ModelIdentifier id() {
 //                return id;
 //            }
 //
@@ -210,10 +210,10 @@
 //    }
 //
 //    @Override
-//    public BakedModel modifyBlockModelAfterBake(BakedModel bakedModel, UnbakedBlockStateModel model, ModelResourceLocation id, ModelBaker baker) {
+//    public BakedModel modifyBlockModelAfterBake(BakedModel bakedModel, UnbakedBlockStateModel model, ModelIdentifier id, ModelBaker baker) {
 //        return afterBakeBlockModifiers.invoker().modifyModelAfterBake(bakedModel, new ModelModifier.AfterBakeBlock.Context() {
 //            @Override
-//            public ModelResourceLocation id() {
+//            public ModelIdentifier id() {
 //                return id;
 //            }
 //
@@ -238,12 +238,12 @@
 //        }
 //
 //        @Override
-//        public void addModels(ResourceLocation... ids) {
+//        public void addModels(Identifier... ids) {
 //            /* no-op on dynamic model loader */
 //        }
 //
 //        @Override
-//        public void addModels(Collection<? extends ResourceLocation> ids) {
+//        public void addModels(Collection<? extends Identifier> ids) {
 //            /* no-op on dynamic model loader */
 //        }
 //

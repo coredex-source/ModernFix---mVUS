@@ -3,7 +3,7 @@ package org.embeddedt.modernfix.neoforge.packet;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.embeddedt.modernfix.ModernFix;
 
 public enum SmartIngredientSyncPayload implements CustomPacketPayload {
@@ -11,7 +11,7 @@ public enum SmartIngredientSyncPayload implements CustomPacketPayload {
 
     public static final ThreadLocal<Boolean> CLIENT_HAS_SMART_INGREDIENT_SYNC = ThreadLocal.withInitial(() -> false);
 
-    public static final CustomPacketPayload.Type<SmartIngredientSyncPayload> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ModernFix.MODID, "ingredient_sync"));
+    public static final CustomPacketPayload.Type<SmartIngredientSyncPayload> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(ModernFix.MODID, "ingredient_sync"));
     public static final StreamCodec<RegistryFriendlyByteBuf, SmartIngredientSyncPayload> STREAM_CODEC = StreamCodec.unit(INSTANCE);
 
     @Override

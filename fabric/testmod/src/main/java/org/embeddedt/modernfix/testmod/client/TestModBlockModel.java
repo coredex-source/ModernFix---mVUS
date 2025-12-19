@@ -17,7 +17,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -32,7 +32,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class TestModBlockModel implements UnbakedModel, BakedModel, FabricBakedModel {
-    private static final Material BASE_WOOL = new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(TestMod.ID, "block/base_wool"));
+    private static final Material BASE_WOOL = new Material(TextureAtlas.LOCATION_BLOCKS, new Identifier(TestMod.ID, "block/base_wool"));
 
     private Mesh mesh;
     private TextureAtlasSprite texture;
@@ -101,12 +101,12 @@ public class TestModBlockModel implements UnbakedModel, BakedModel, FabricBakedM
     }
 
     @Override
-    public Collection<ResourceLocation> getDependencies() {
+    public Collection<Identifier> getDependencies() {
         return Collections.emptyList();
     }
 
     @Override
-    public void resolveParents(Function<ResourceLocation, UnbakedModel> function) {
+    public void resolveParents(Function<Identifier, UnbakedModel> function) {
 
     }
 
@@ -116,7 +116,7 @@ public class TestModBlockModel implements UnbakedModel, BakedModel, FabricBakedM
 
     @Nullable
     @Override
-    public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState state, ResourceLocation location) {
+    public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState state, Identifier location) {
         // Build the mesh using the Renderer API
         Renderer renderer = RendererAccess.INSTANCE.getRenderer();
         MeshBuilder builder = renderer.meshBuilder();

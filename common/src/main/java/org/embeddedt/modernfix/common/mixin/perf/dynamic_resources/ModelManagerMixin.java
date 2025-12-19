@@ -1,11 +1,8 @@
 package org.embeddedt.modernfix.common.mixin.perf.dynamic_resources;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.sugar.Share;
-import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.item.ClientItem;
@@ -16,7 +13,7 @@ import net.minecraft.client.resources.model.BlockStateModelLoader;
 import net.minecraft.client.resources.model.ClientItemInfoLoader;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -40,17 +37,20 @@ import java.util.concurrent.Executor;
 @Mixin(ModelManager.class)
 @ClientOnlyMixin
 public class ModelManagerMixin implements DynamicModelProvider.ModelManagerExtension {
-    @Shadow private Map<ResourceLocation, ItemModel> bakedItemStackModels;
-    @Shadow private Map<ResourceLocation, ClientItem.Properties> itemProperties;
+    @Shadow private Map<Identifier, ItemModel> bakedItemStackModels;
+    @Shadow private Map<Identifier, ClientItem.Properties> itemProperties;
 
     @Shadow
     @Final
     private AtlasManager atlasManager;
+    @Final
+    @Shadow
+    private PlayerSkinRenderCache playerSkinRenderCache;
     @Unique
     private DynamicModelProvider mfix$modelProvider;
 
     @Redirect(method = "reload", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/ModelManager;loadBlockModels(Lnet/minecraft/server/packs/resources/ResourceManager;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
-    private CompletableFuture<Map<ResourceLocation, BlockModel>> deferBlockModelLoad(ResourceManager manager, Executor executor) {
+    private CompletableFuture<Map<Identifier, BlockModel>> deferBlockModelLoad(ResourceManager manager, Executor executor) {
         return CompletableFuture.completedFuture(Map.of());
     }
 
@@ -75,33 +75,31 @@ public class ModelManagerMixin implements DynamicModelProvider.ModelManagerExten
         return CompletableFuture.completedFuture(new ClientItemInfoLoader.LoadedClientInfos(Map.of()));
     }
 
-    @ModifyExpressionValue(method = "reload", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/AtlasManager$PendingStitchResults;get(Lnet/minecraft/resources/ResourceLocation;)Ljava/util/concurrent/CompletableFuture;"))
-    private CompletableFuture<SpriteLoader.Preparations> storePreparationsFuture(
-            CompletableFuture<SpriteLoader.Preparations> original,
-            @Share("preparationsFuture") LocalRef<CompletableFuture<SpriteLoader.Preparations>> sharedPreparationsFuture
-    ) {
-        sharedPreparationsFuture.set(original);
-        return original;
-    }
+
 
     @ModifyArg(method = "reload", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;allOf([Ljava/util/concurrent/CompletableFuture;)Ljava/util/concurrent/CompletableFuture;", ordinal = 1))
     public CompletableFuture<?>[] createModelProviderCommon(
-            CompletableFuture<?>[] cfs,
-            @Local(ordinal = 0) CompletableFuture<EntityModelSet> entityModelFuture,
-            @Share("preparationsFuture") LocalRef<CompletableFuture<SpriteLoader.Preparations>> sharedPreparationsFuture
+            CompletableFuture<?>[] futures
     ) {
-        CompletableFuture<Void> makeModelProviderFuture = entityModelFuture
-                .thenAcceptBoth(sharedPreparationsFuture.get(), (entityModelSet, preparations) -> {
-                    this.mfix$modelProvider = new DynamicModelProvider(
-                            Minecraft.getInstance().getResourceManager(),
-                            entityModelSet,
-                            preparations,
-                            ((ModelManagerAccessor) this).mfix$getPlayerSkinRenderCache(),
-                            this.atlasManager
-                    );
-                    DynamicModelProvider.currentReloadingModelProvider = new WeakReference<>(this.mfix$modelProvider);
-                });
-        return ArrayUtils.add(cfs, makeModelProviderFuture);
+        // Remember to change these when updating! Otherwise, I doubt the order of the arguments will change
+        var itemPreparationsFuture = (CompletableFuture<SpriteLoader.Preparations>) futures[1];
+        var blockPreparationsFuture = (CompletableFuture<SpriteLoader.Preparations>) futures[0];
+        var entityModelSetFuture = (CompletableFuture<EntityModelSet>) futures[6];
+
+        CompletableFuture<Void> makeModelProviderFuture = CompletableFuture.allOf(itemPreparationsFuture, blockPreparationsFuture, entityModelSetFuture).thenApplyAsync(_void -> {
+                this.mfix$modelProvider = new DynamicModelProvider(
+                        Minecraft.getInstance().getResourceManager(),
+                        entityModelSetFuture.join(),
+                        blockPreparationsFuture.join(),
+                        itemPreparationsFuture.join(),
+                        this.playerSkinRenderCache,
+                        this.atlasManager
+                );
+                DynamicModelProvider.currentReloadingModelProvider = new WeakReference<>(this.mfix$modelProvider);
+            return _void;
+        });
+
+        return ArrayUtils.add(futures, makeModelProviderFuture);
     }
 
     @Inject(method = "apply", at = @At("RETURN"))

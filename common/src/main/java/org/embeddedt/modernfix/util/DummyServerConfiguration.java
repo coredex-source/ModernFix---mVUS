@@ -7,6 +7,7 @@ import net.minecraft.world.level.*;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.dimension.end.EndDragonFight;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.storage.WorldData;
 import net.minecraft.world.level.storage.ServerLevelData;

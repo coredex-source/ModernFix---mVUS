@@ -3,7 +3,7 @@ package org.embeddedt.modernfix.neoforge.mixin.perf.dynamic_resources;
 import com.google.common.base.Stopwatch;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.client.resources.model.ModelIdentifier;
 import net.neoforged.bus.api.Event;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
@@ -41,7 +41,7 @@ public class ForgeHooksClientMixin {
         Map<String, Stopwatch> times = new Object2ObjectOpenHashMap<>();
         times.put("modernfix", selfTimer);
         ModList.get().forEachModContainer((id, mc) -> {
-            Map<ModelResourceLocation, BakedModel> newRegistry = helper.wrapRegistry(id);
+            Map<ModelIdentifier, BakedModel> newRegistry = helper.wrapRegistry(id);
             ModelEvent.ModifyBakingResult postedEvent = new ModelEvent.ModifyBakingResult(newRegistry, bakeEvent.getTextureGetter(), bakeEvent.getModelBakery());
             Stopwatch timer = times.computeIfAbsent(id, $ -> Stopwatch.createUnstarted());
             timer.start();

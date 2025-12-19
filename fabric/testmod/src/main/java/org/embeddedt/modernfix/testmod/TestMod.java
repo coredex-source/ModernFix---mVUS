@@ -4,7 +4,7 @@ import com.google.common.base.Stopwatch;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.apache.logging.log4j.LogManager;
@@ -32,7 +32,7 @@ public class TestMod implements ModInitializer {
         for(int r = 0; r < NUM_COLORS; r++) {
             for(int g = 0; g < NUM_COLORS; g++) {
                 for(int b = 0; b < NUM_COLORS; b++) {
-                    ResourceLocation name = new ResourceLocation(ID, "wool_" + r + "_" + g + "_" + b);
+                    Identifier name = new Identifier(ID, "wool_" + r + "_" + g + "_" + b);
                     TestBlock block = Registry.register(BuiltInRegistries.BLOCK, name, new TestBlock());
                     WOOL_STATES.add(block.defaultBlockState());
                     //Registry.register(BuiltInRegistries.ITEM, name, new TestBlockItem(block));

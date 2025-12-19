@@ -2,7 +2,7 @@ package org.embeddedt.modernfix;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.TracingExecutor;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerLevel;

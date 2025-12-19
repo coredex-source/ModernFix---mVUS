@@ -1,6 +1,6 @@
 package org.embeddedt.modernfix.common.mixin.perf.cache_strongholds;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -40,7 +40,7 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
         List<ChunkPos> positions = cache.getChunkPosList();
         if(positions.isEmpty())
             return;
-        ModernFix.LOGGER.debug("Loaded stronghold cache for dimension {} with {} positions", level.dimension().location(), positions.size());
+        ModernFix.LOGGER.debug("Loaded stronghold cache for dimension {} with {} positions", level.dimension().identifier(), positions.size());
         cir.setReturnValue(CompletableFuture.completedFuture(positions));
     }
 
@@ -60,7 +60,7 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
             if(level != null) {
                 StrongholdLocationCache cache = ((IServerLevel)level).mfix$getStrongholdCache();
                 cache.setChunkPosList(list);
-                ModernFix.LOGGER.debug("Saved stronghold cache for dimension {}", level.dimension().location());
+                ModernFix.LOGGER.debug("Saved stronghold cache for dimension {}", level.dimension().identifier());
             }
             return list;
         }, Util.backgroundExecutor()));

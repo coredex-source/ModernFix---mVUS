@@ -1,7 +1,7 @@
 package org.embeddedt.modernfix.common.mixin.feature.cause_lag_by_disabling_threads;
 
 import net.minecraft.TracingExecutor;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import org.embeddedt.modernfix.util.DirectExecutorService;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

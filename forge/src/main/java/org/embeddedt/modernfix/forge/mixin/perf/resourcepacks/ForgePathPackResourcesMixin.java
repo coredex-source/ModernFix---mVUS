@@ -1,6 +1,6 @@
 package org.embeddedt.modernfix.forge.mixin.perf.resourcepacks;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraftforge.forgespi.locating.IModFile;
@@ -32,7 +32,7 @@ public abstract class ForgePathPackResourcesMixin implements ICachingResourcePac
     @Shadow(remap = false) @NotNull
     protected abstract Set<String> getNamespacesFromDisk(PackType type);
 
-    @Shadow(remap = false) private static String[] getPathFromLocation(PackType type, ResourceLocation location) {
+    @Shadow(remap = false) private static String[] getPathFromLocation(PackType type, Identifier location) {
         throw new AssertionError();
     }
 

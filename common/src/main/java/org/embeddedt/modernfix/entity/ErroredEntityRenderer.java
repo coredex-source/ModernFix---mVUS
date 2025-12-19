@@ -24,6 +24,7 @@ public class ErroredEntityRenderer<T extends Entity> extends EntityRenderer<T, E
         return null;
     }
 
+    @Override
     public void submit(EntityRenderState renderState, PoseStack poseStack, SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
     }
 }

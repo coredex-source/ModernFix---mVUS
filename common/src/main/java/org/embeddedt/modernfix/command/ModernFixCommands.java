@@ -2,18 +2,20 @@ package org.embeddedt.modernfix.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import org.embeddedt.modernfix.duck.IProfilingServerFunctionManager;
 
 
-
 import static net.minecraft.commands.Commands.literal;
 
 public class ModernFixCommands {
+
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(literal("modernfix")
-                .then(literal("mcfunctions").requires(source -> source.hasPermission(3))
+                .then(literal("mcfunctions").requires(Commands.hasPermission(Commands.LEVEL_ADMINS))
                         .executes(context -> {
                             ServerLevel level = context.getSource().getLevel();
                             if(level == null) {

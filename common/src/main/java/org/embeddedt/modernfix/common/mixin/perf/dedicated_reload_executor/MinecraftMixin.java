@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(Minecraft.class)
 @ClientOnlyMixin
 public class MinecraftMixin {
-    @Redirect(method = { "<init>", "reloadResourcePacks(ZLnet/minecraft/client/Minecraft$GameLoadCookie;)Ljava/util/concurrent/CompletableFuture;" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/Util;backgroundExecutor()Lnet/minecraft/TracingExecutor;", ordinal = 0))
+    @Redirect(method = { "<init>", "reloadResourcePacks(ZLnet/minecraft/client/Minecraft$GameLoadCookie;)Ljava/util/concurrent/CompletableFuture;" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Util;backgroundExecutor()Lnet/minecraft/TracingExecutor;", ordinal = 0))
     private TracingExecutor getResourceReloadExecutor() {
         return ModernFix.resourceReloadExecutor();
     }

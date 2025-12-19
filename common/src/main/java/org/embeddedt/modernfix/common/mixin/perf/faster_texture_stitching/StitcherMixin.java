@@ -32,6 +32,8 @@ public class StitcherMixin<T extends Stitcher.Entry> {
     @Shadow @Final private int maxWidth;
     @Shadow @Final private int maxHeight;
 
+    @Shadow @Final private int padding;
+
     @Shadow @Final private static Comparator<Stitcher.Holder<?>> HOLDER_COMPARATOR;
     private List<StbStitcher.LoadableSpriteInfo<T>> loadableSpriteInfos;
 
@@ -71,7 +73,7 @@ public class StitcherMixin<T extends Stitcher.Entry> {
 
     /**
      * @author embeddedt, SuperCoder79
-     * @reason We setup the image ourselves in the StbStitcher, so we just feed this information back into the vanilla code
+     * @reason We set up the image ourselves in the StbStitcher, so we just feed this information back into the vanilla code
      */
     @Inject(method = "gatherSprites", at = @At("HEAD"), cancellable = true)
     private void gatherSpritesFast(Stitcher.SpriteLoader<T> spriteLoader, CallbackInfo ci) {
@@ -79,7 +81,7 @@ public class StitcherMixin<T extends Stitcher.Entry> {
             return;
         ci.cancel();
         for(StbStitcher.LoadableSpriteInfo<T> info : loadableSpriteInfos) {
-            spriteLoader.load(info.info, info.x, info.y);
+            spriteLoader.load(info.info, info.x, info.y, padding);
         }
     }
 }

@@ -5,7 +5,7 @@ import com.google.common.cache.RemovalCause;
 import com.google.common.cache.RemovalNotification;
 import com.mojang.blaze3d.audio.SoundBuffer;
 import net.minecraft.client.sounds.SoundBufferLibrary;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.embeddedt.modernfix.annotation.ClientOnlyMixin;
 import org.embeddedt.modernfix.dynamicresources.DynamicSoundHelpers;
 import org.embeddedt.modernfix.ModernFix;
@@ -25,15 +25,15 @@ public abstract class SoundBufferLibraryMixin {
     private static final boolean debugDynamicSoundLoading = Boolean.getBoolean("modernfix.debugDynamicSoundLoading");
 
     @Shadow @Final @Mutable
-    private Map<ResourceLocation, CompletableFuture<SoundBuffer>> cache = CacheBuilder.newBuilder()
+    private Map<Identifier, CompletableFuture<SoundBuffer>> cache = CacheBuilder.newBuilder()
         .expireAfterAccess(DynamicSoundHelpers.MAX_SOUND_LIFETIME_SECS, TimeUnit.SECONDS)
         .concurrencyLevel(1)
         // Excessive use of type hinting due to it assuming Object as the broadest correct type
-        .<ResourceLocation, CompletableFuture<SoundBuffer>>removalListener(this::onSoundRemoval)
+        .<Identifier, CompletableFuture<SoundBuffer>>removalListener(this::onSoundRemoval)
         .build()
         .asMap();
 
-    private <K extends ResourceLocation, V extends CompletableFuture<SoundBuffer>> void onSoundRemoval(RemovalNotification<K, V> notification) {
+    private <K extends Identifier, V extends CompletableFuture<SoundBuffer>> void onSoundRemoval(RemovalNotification<K, V> notification) {
         if(notification.getCause() == RemovalCause.REPLACED && notification.getValue() == cache.get(notification.getKey()))
             return;
         notification.getValue().thenAccept(SoundBuffer::discardAlBuffer);

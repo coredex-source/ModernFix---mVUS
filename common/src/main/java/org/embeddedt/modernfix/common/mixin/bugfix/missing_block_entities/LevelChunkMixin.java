@@ -5,15 +5,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
-
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.chunk.PalettedContainerFactory;
-import net.minecraft.world.level.chunk.UpgradeData;
+import net.minecraft.world.level.chunk.*;
 import net.minecraft.world.level.levelgen.blending.BlendingData;
 import org.embeddedt.modernfix.ModernFix;
 import org.embeddedt.modernfix.annotation.ClientOnlyMixin;
@@ -38,8 +33,8 @@ public abstract class LevelChunkMixin extends ChunkAccess {
 
     @Shadow @Nullable public abstract BlockEntity getBlockEntity(BlockPos pos, LevelChunk.EntityCreationType creationType);
 
-    public LevelChunkMixin(ChunkPos chunkPos, UpgradeData upgradeData, LevelHeightAccessor levelHeightAccessor, PalettedContainerFactory palettedContainerFactory, long inhabitedTime, @Nullable LevelChunkSection[] sections, @Nullable BlendingData blendingData) {
-        super(chunkPos, upgradeData, levelHeightAccessor, palettedContainerFactory, inhabitedTime, sections, blendingData);
+    public LevelChunkMixin(ChunkPos chunkPos, UpgradeData upgradeData, LevelHeightAccessor levelHeightAccessor, PalettedContainerFactory biomeRegistry, long inhabitedTime, @Nullable LevelChunkSection[] sections, @Nullable BlendingData blendingData) {
+        super(chunkPos, upgradeData, levelHeightAccessor, biomeRegistry, inhabitedTime, sections, blendingData);
     }
 
     @Inject(method = "replaceWithPacketData", at = @At("RETURN"))

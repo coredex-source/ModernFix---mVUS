@@ -1,6 +1,6 @@
 package org.embeddedt.modernfix.resources;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.resources.IoSupplier;
 
@@ -9,8 +9,8 @@ import java.util.Collection;
 import java.util.function.Function;
 
 public class NewResourcePackAdapter {
-    public static void sendToOutput(Function<ResourceLocation, IoSupplier<InputStream>> streamCreator, PackResources.ResourceOutput output, Collection<ResourceLocation> locations) {
-        for(ResourceLocation rl : locations) {
+    public static void sendToOutput(Function<Identifier, IoSupplier<InputStream>> streamCreator, PackResources.ResourceOutput output, Collection<Identifier> locations) {
+        for(Identifier rl : locations) {
             output.accept(rl, streamCreator.apply(rl));
         }
     }
