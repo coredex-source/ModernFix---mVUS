@@ -101,7 +101,6 @@
     "perf.dynamic_resources.IdMapperAccessor",
     "perf.dynamic_resources.MixinBlockState",
     "perf.dynamic_resources.MixinBlockStateModelLoader",
-    "perf.dynamic_resources.MixinClientItemInfoLoader",
     "perf.dynamic_resources.MixinModelBakery",
     "perf.dynamic_resources.MixinModelManager",
     "perf.dynamic_resources.ModelDiscoveryAccessor",
