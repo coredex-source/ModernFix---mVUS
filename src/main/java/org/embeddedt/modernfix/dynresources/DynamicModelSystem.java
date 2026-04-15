@@ -13,6 +13,7 @@ import it.unimi.dsi.fastutil.objects.ObjectSets;
 import it.unimi.dsi.fastutil.objects.ReferenceSets;
 import net.fabricmc.fabric.impl.client.model.loading.UnbakedModelDeserializerRegistry;
 import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.renderer.item.ClientItem;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.resources.model.cuboid.ItemModelGenerator;
 import net.minecraft.client.resources.model.BlockStateModelLoader;
@@ -32,6 +33,7 @@ import org.embeddedt.modernfix.ModernFix;
 import org.embeddedt.modernfix.common.mixin.perf.dynamic_resources.BlockStateDefinitionsAccessor;
 import org.embeddedt.modernfix.common.mixin.perf.dynamic_resources.IdMapperAccessor;
 import org.embeddedt.modernfix.common.mixin.perf.dynamic_resources.ModelDiscoveryAccessor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Reader;
 import java.util.AbstractSet;
@@ -46,6 +48,7 @@ import java.util.stream.Collectors;
 public class DynamicModelSystem {
     private static final FileToIdConverter MODEL_LISTER = FileToIdConverter.json("models");
     private static final FileToIdConverter BLOCKSTATE_LISTER = FileToIdConverter.json("blockstates");
+    private static final FileToIdConverter ITEM_LISTER = FileToIdConverter.json("items");
 
     public static final boolean DEBUG_DYNAMIC_MODEL_LOADING = Boolean.getBoolean("modernfix.debugDynamicModelLoading");
     
@@ -101,6 +104,41 @@ public class DynamicModelSystem {
             }
             var loadedModels = definitionCache.getUnchecked(identifier);
             return loadedModels.models().get(state);
+        }));
+    }
+
+    public interface SingleClientItemEntryLoader {
+        @Nullable ClientItem loadEntry(Identifier resourceFileId, Resource resource);
+    }
+
+    public static ClientItemInfoLoader.LoadedClientInfos createDynamicClientInfos(Map<Identifier, Resource> resourceMap, SingleClientItemEntryLoader entryLoader) {
+        Set<Identifier> itemIdSet = resourceMap.keySet().stream().map(ITEM_LISTER::fileToId).collect(Collectors.toUnmodifiableSet());
+        LoadingCache<Identifier, Object> clientItemCache = CacheBuilder.newBuilder().softValues().maximumSize(1000).build(new CacheLoader<>() {
+            @Override
+            public Object load(Identifier key) {
+                Identifier fileId = ITEM_LISTER.idToFile(key);
+                Resource resource = resourceMap.get(fileId);
+                if (resource == null) {
+                    return NULL_SENTINEL;
+                }
+                if (DEBUG_DYNAMIC_MODEL_LOADING) {
+                    ModernFix.LOGGER.info("Loading client item info {}", key);
+                }
+                try {
+                    ClientItem result = entryLoader.loadEntry(fileId, resource);
+                    return result != null ? result : NULL_SENTINEL;
+                } catch (RuntimeException e) {
+                    ModernFix.LOGGER.warn("Failed to build dynamic client item info for {}", key, e);
+                    return NULL_SENTINEL;
+                }
+            }
+        });
+        return new ClientItemInfoLoader.LoadedClientInfos(Maps.asMap(itemIdSet, key -> {
+            if (key == null) {
+                return null;
+            }
+            Object value = clientItemCache.getUnchecked(key);
+            return value == NULL_SENTINEL ? null : (ClientItem) value;
         }));
     }
 
@@ -167,7 +205,7 @@ public class DynamicModelSystem {
         }
     }
 
-    private static final Object NULL_BAKED = new Object();
+    private static final Object NULL_SENTINEL = new Object();
 
     public static <K, U, V> Map<K, V> createDynamicBakedRegistry(Map<K, U> input, BiFunction<K, U, V> baker) {
         // TODO: support persistence of overrides
@@ -181,14 +219,14 @@ public class DynamicModelSystem {
                     }
                     return baker.apply(key, unbaked);
                 } else {
-                    return NULL_BAKED;
+                    return NULL_SENTINEL;
                 }
             }
         });
         return new DynamicRegistryMap<>(input.keySet(), k -> {
             if (k != null) {
                 Object value = bakedCache.getUnchecked(k);
-                if (value == NULL_BAKED) {
+                if (value == NULL_SENTINEL) {
                     value = null;
                 }
                 return (V) value;
