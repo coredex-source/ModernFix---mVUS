@@ -35,7 +35,7 @@ public class ModernFixOptionInfoScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.gui.setScreen(lastScreen);
+        this.minecraft.setScreen(lastScreen);
     }
 
     private void drawMultilineString(GuiGraphicsExtractor guiGraphics, Font fr, Component str, int x, int y) {
