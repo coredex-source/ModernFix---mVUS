@@ -107,7 +107,7 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
 
         public void extractContent(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
             Font var10000 = OptionList.this.minecraft.font;
-            float x = (float)(OptionList.this.minecraft.screen.width / 2 - this.width / 2);
+            float x = (float)(OptionList.this.minecraft.gui.screen().width / 2 - this.width / 2);
             int y = getY() + getHeight() - 10;
             guiGraphics.text(var10000, this.name, (int)x, y, -1);
             /*
@@ -164,7 +164,7 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
             updateStatus();
             this.helpButton = new Button.Builder(Component.literal("?"), (arg) -> {
                 mainScreen.setLastScrollAmount(scrollAmount());
-                Minecraft.getInstance().setScreen(new ModernFixOptionInfoScreen(mainScreen, optionName));
+                Minecraft.getInstance().gui.setScreen(new ModernFixOptionInfoScreen(mainScreen, optionName));
             }).pos(75, 0).size(20, 20).build();
             String helpKey = "modernfix.option." + optionName;
             String helpText = I18n.get(helpKey);
