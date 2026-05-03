@@ -11,10 +11,11 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import it.unimi.dsi.fastutil.objects.ObjectSets;
 import it.unimi.dsi.fastutil.objects.ReferenceSets;
-import net.fabricmc.fabric.impl.client.model.loading.UnbakedModelDeserializerRegistry;
+// import net.fabricmc.fabric.impl.client.model.loading.UnbakedModelDeserializerRegistry; // Disabled by FRAPI
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.renderer.item.ClientItem;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.resources.model.cuboid.CuboidModel;
 import net.minecraft.client.resources.model.cuboid.ItemModelGenerator;
 import net.minecraft.client.resources.model.BlockStateModelLoader;
 import net.minecraft.client.resources.model.ClientItemInfoLoader;
@@ -64,7 +65,8 @@ public class DynamicModelSystem {
                     ModernFix.LOGGER.info("Loading unbaked model {}", key);
                 }
                 try (Reader reader = resource.openAsReader()) {
-                    return UnbakedModelDeserializerRegistry.deserialize(reader);
+                    // return UnbakedModelDeserializerRegistry.deserialize(reader); // Disabled by FRAPI
+                    return CuboidModel.fromStream(reader);
                 }
             }
         });
