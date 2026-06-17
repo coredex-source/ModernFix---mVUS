@@ -92,6 +92,9 @@ public class DynamicModelSystem {
             Objects.requireNonNull(resource, "unbaked model not present");
             try (Reader reader = resource.openAsReader()) {
                 return UnbakedModelDeserializerRegistry.deserialize(reader);
+            } catch (RuntimeException e) {
+                ModernFix.LOGGER.warn("Failed to deserialize unbaked model {}, using missing model", id, e);
+                return MissingCuboidModel.missingModel();
             }
         });
     }
