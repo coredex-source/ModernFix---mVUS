@@ -35,10 +35,12 @@ import org.embeddedt.modernfix.common.mixin.perf.dynamic_resources.IdMapperAcces
 import org.embeddedt.modernfix.common.mixin.perf.dynamic_resources.ModelDiscoveryAccessor;
 
 import java.io.Reader;
+import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -47,28 +49,111 @@ import java.util.stream.Collectors;
 public class DynamicModelSystem {
     private static final FileToIdConverter MODEL_LISTER = FileToIdConverter.json("models");
     private static final FileToIdConverter BLOCKSTATE_LISTER = FileToIdConverter.json("blockstates");
+    private static final Object FAILED_UNBAKED_MODEL = new Object();
 
     public static final boolean DEBUG_DYNAMIC_MODEL_LOADING = Boolean.getBoolean("modernfix.debugDynamicModelLoading");
     
     public static Map<Identifier, UnbakedModel> createDynamicUnbakedModelMap(Map<Identifier, Resource> resourceMap) {
-        LoadingCache<Identifier, UnbakedModel> unbakedModelCache = CacheBuilder.newBuilder().softValues().maximumSize(1000).build(new CacheLoader<>() {
+        LoadingCache<Identifier, Object> unbakedModelCache = CacheBuilder.newBuilder().softValues().maximumSize(1000).build(new CacheLoader<>() {
             @Override
-            public UnbakedModel load(Identifier key) throws Exception {
-                var resource = resourceMap.get(MODEL_LISTER.idToFile(key));
+            public Object load(Identifier key) throws Exception {
+                var file = MODEL_LISTER.idToFile(key);
+                var resource = resourceMap.get(file);
                 if (resource == null) {
-                    throw new IllegalArgumentException("Model " + key + " does not exist in map");
+                    return FAILED_UNBAKED_MODEL;
                 }
                 if (DEBUG_DYNAMIC_MODEL_LOADING) {
                     ModernFix.LOGGER.info("Loading unbaked model {}", key);
                 }
                 try (Reader reader = resource.openAsReader()) {
                     // Use Fabric's deserializer - handles both vanilla and custom fabric models
-                    return UnbakedModelDeserializerRegistry.deserialize(reader);
+                    var model = UnbakedModelDeserializerRegistry.deserialize(reader);
+                    if (model == null) {
+                        ModernFix.LOGGER.error("Failed to load model {}: deserializer returned null", file);
+                        return FAILED_UNBAKED_MODEL;
+                    }
+                    return model;
+                } catch (Exception e) {
+                    ModernFix.LOGGER.error("Failed to load model {}", file, e);
+                    return FAILED_UNBAKED_MODEL;
                 }
             }
         });
         Set<Identifier> unbakedIdSet = resourceMap.keySet().stream().map(MODEL_LISTER::fileToId).collect(Collectors.toUnmodifiableSet());
-        return Maps.asMap(unbakedIdSet, key -> key != null ? unbakedModelCache.getUnchecked(key) : null);
+        return new LazyUnbakedModelMap(unbakedIdSet, unbakedModelCache);
+    }
+
+    private static class LazyUnbakedModelMap extends AbstractMap<Identifier, UnbakedModel> {
+        private final Set<Identifier> keys;
+        private final LoadingCache<Identifier, Object> modelCache;
+        private final Set<Entry<Identifier, UnbakedModel>> entrySet;
+
+        private LazyUnbakedModelMap(Set<Identifier> keys, LoadingCache<Identifier, Object> modelCache) {
+            this.keys = keys;
+            this.modelCache = modelCache;
+            this.entrySet = new EntrySet();
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return keys.contains(key);
+        }
+
+        @Override
+        public UnbakedModel get(Object key) {
+            if (!(key instanceof Identifier identifier) || !keys.contains(identifier)) {
+                return null;
+            }
+            var value = modelCache.getUnchecked(identifier);
+            return value != FAILED_UNBAKED_MODEL ? (UnbakedModel)value : null;
+        }
+
+        @Override
+        public Set<Identifier> keySet() {
+            return keys;
+        }
+
+        @Override
+        public Set<Entry<Identifier, UnbakedModel>> entrySet() {
+            return entrySet;
+        }
+
+        private class EntrySet extends AbstractSet<Entry<Identifier, UnbakedModel>> {
+            @Override
+            public Iterator<Entry<Identifier, UnbakedModel>> iterator() {
+                var iterator = keys.iterator();
+                return new Iterator<>() {
+                    private Entry<Identifier, UnbakedModel> next;
+
+                    @Override
+                    public boolean hasNext() {
+                        while (next == null && iterator.hasNext()) {
+                            var key = iterator.next();
+                            var value = LazyUnbakedModelMap.this.get(key);
+                            if (value != null) {
+                                next = new SimpleImmutableEntry<>(key, value);
+                            }
+                        }
+                        return next != null;
+                    }
+
+                    @Override
+                    public Entry<Identifier, UnbakedModel> next() {
+                        if (!hasNext()) {
+                            throw new NoSuchElementException();
+                        }
+                        var result = next;
+                        next = null;
+                        return result;
+                    }
+                };
+            }
+
+            @Override
+            public int size() {
+                return keys.size();
+            }
+        }
     }
 
     public interface SingleBlockStateEntryLoader {
