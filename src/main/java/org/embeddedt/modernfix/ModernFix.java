@@ -15,6 +15,7 @@ import org.embeddedt.modernfix.resources.ReloadExecutor;
 import org.embeddedt.modernfix.util.ClassInfoManager;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 
+import net.minecraft.client.Minecraft;
 import java.lang.management.ManagementFactory;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -51,6 +52,8 @@ public class ModernFix {
         if (auditAndExit || Boolean.getBoolean("modernfix.auditMixinsAtStart")) {
             MixinEnvironment.getCurrentEnvironment().audit();
             if (auditAndExit) {
+                // Prevents Crash Assistant from treating mixin audit as a crash
+                Minecraft.getInstance().stop();
                 System.exit(0);
             }
         }
