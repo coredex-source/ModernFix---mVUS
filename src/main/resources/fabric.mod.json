@@ -8,18 +8,18 @@
     "embeddedt"
   ],
   "contact": {
-    "sources": "https://github.com/embeddedt/ModernFix",
-    "homepage": "https://modrinth.com/mod/modernfix",
-    "issues": "https://github.com/embeddedt/ModernFix/issues"
+    "sources": "https://github.com/coredex-source/ModernFix---mVUS",
+    "homepage": "https://modrinth.com/mod/modernfix-mvus",
+    "issues": "https://github.com/coredex-source/ModernFix---mVUS/issues"
   },
   "license": "LGPL-3.0",
   "icon": "icon.png",
   "custom": {
     "modmenu": {
       "links": {
-        "modmenu.kofi": "https://ko-fi.com/embeddedt",
-        "modmenu.github_releases": "https://github.com/embeddedt/ModernFix/releases",
-        "modmenu.curseforge": "https://www.curseforge.com/minecraft/mc-mods/modernfix"
+        "modmenu.kofi": "https://ko-fi.com/coredex",
+        "modmenu.github_releases": "https://github.com/coredex-source/ModernFix---mVUS/releases",
+        "modmenu.curseforge": "https://www.curseforge.com/minecraft/mc-mods/modernfix-mvus"
       }
     }
   },

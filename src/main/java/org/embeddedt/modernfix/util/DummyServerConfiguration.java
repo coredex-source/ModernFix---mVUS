@@ -88,6 +88,11 @@ public class DummyServerConfiguration implements WorldData {
     }
 
     @Override
+    public void setAllowCommands(boolean allowCommands) {
+
+    }
+
+    @Override
     public Difficulty getDifficulty() {
         return null;
     }

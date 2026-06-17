@@ -13,6 +13,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
@@ -41,7 +42,7 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
     private static MutableComponent getOptionComponent(Option option) {
         String friendlyKey = "modernfix.option.name." + option.getName();
         MutableComponent baseComponent = Component.literal(option.getSelfName());
-        if(I18n.exists(friendlyKey))
+        if(Language.getInstance().has(friendlyKey))
             return Component.translatable(friendlyKey).withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(baseComponent)));
         else
             return baseComponent;
@@ -168,7 +169,7 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
             }).pos(75, 0).size(20, 20).build();
             String helpKey = "modernfix.option." + optionName;
             String helpText = I18n.get(helpKey);
-            if(!I18n.exists(helpKey) || helpText == null || helpText.isBlank() || helpText.equals(helpKey)) {
+            if(!Language.getInstance().has(helpKey) || helpText == null || helpText.isBlank() || helpText.equals(helpKey)) {
                 this.helpButton.active = false;
                 if(ModernFixPlatformHooks.INSTANCE.isDevEnv() && OPTIONS_MISSING_HELP.add(optionName))
                     ModernFix.LOGGER.warn("Missing help for {}", optionName);
