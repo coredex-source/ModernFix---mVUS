@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -67,6 +68,7 @@ public class MixinModelManager {
     @Overwrite
     private static Map<BlockState, BlockStateModel> createBlockStateToModelDispatch(Map<BlockState, BlockStateModel> blockStateModels, BlockStateModel missingModel) {
         BlockStateModelMap.resetCache();
+        Objects.requireNonNull(missingModel);
         return new BlockStateModelMap(blockStateModels, missingModel);
     }
 }

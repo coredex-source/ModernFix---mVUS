@@ -104,6 +104,7 @@
     "perf.dynamic_resources.MixinClientItemInfoLoader",
     "perf.dynamic_resources.MixinModelBakery",
     "perf.dynamic_resources.MixinModelManager",
+    "perf.dynamic_resources.MixinTextureSlots",
     "perf.dynamic_resources.ModelDiscoveryAccessor",
     "perf.dynamic_sounds.SoundBufferLibraryMixin",
     "perf.encoder_cache_leak.ClientConfigurationPacketListenerImplMixin",
