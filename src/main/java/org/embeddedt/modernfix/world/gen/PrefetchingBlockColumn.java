@@ -90,7 +90,7 @@ public class PrefetchingBlockColumn implements BlockColumn {
                 y,
                 SectionPos.sectionToBlockCoord(chunk.getPos().z(), localZ)
         );
-        chunk.markPosForPostprocessing(cursor);
+        chunk.markPosForPostProcessing(cursor);
     }
 
     private void updateHeightmap(Heightmap.Types type, int y, BlockState newState) {

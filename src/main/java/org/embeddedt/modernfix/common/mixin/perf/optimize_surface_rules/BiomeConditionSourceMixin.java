@@ -3,6 +3,7 @@ package org.embeddedt.modernfix.common.mixin.perf.optimize_surface_rules;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.SurfaceRules;
+import org.embeddedt.modernfix.annotation.IgnoreMixin;
 import org.embeddedt.modernfix.world.gen.ExtendedSurfaceContext;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @Mixin(SurfaceRules.BiomeConditionSource.class)
+@IgnoreMixin
 public class BiomeConditionSourceMixin {
     @Shadow
     @Final

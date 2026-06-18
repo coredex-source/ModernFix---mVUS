@@ -3,6 +3,7 @@ package org.embeddedt.modernfix.common.mixin.perf.optimize_surface_rules;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.SurfaceRules;
+import org.embeddedt.modernfix.annotation.IgnoreMixin;
 import org.embeddedt.modernfix.world.gen.ExtendedSurfaceContext;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,6 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import java.util.Set;
 
 @Mixin(SurfaceRules.Context.class)
+@IgnoreMixin
 public class SurfaceRulesContextMixin implements ExtendedSurfaceContext {
     @Nullable Set<ResourceKey<Biome>> mfix$possibleBiomes;
 

@@ -21,6 +21,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
+import org.embeddedt.modernfix.annotation.IgnoreMixin;
 import org.fury_phoenix.mixinAp.config.MixinConfig;
 
 @SupportedAnnotationTypes({"org.spongepowered.asm.mixin.Mixin", "org.embeddedt.modernfix.annotation.ClientOnlyMixin"})
@@ -69,17 +70,18 @@ public class MixinProcessor extends AbstractProcessor {
 
     private void processMixins(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (TypeElement annotation : annotations) {
-            Set<? extends Element> annotatedMixins = roundEnv.getElementsAnnotatedWith(annotation);
+            List<TypeElement> annotatedMixins = roundEnv.getElementsAnnotatedWith(annotation)
+            .stream()
+            .map(TypeElement.class::cast)
+            .filter(e -> e.getAnnotation(IgnoreMixin.class) == null)
+            .collect(Collectors.toList());
 
-            Stream<TypeElement> mixinStream =
-            annotatedMixins.stream()
-            .map(TypeElement.class::cast);
+            Stream<TypeElement> mixinStream = annotatedMixins.stream();
 
             validateCommonMixins(annotation, mixinStream);
 
             List<String> mixins =
             annotatedMixins.stream()
-            .map(TypeElement.class::cast)
             .map(e -> processingEnv.getElementUtils().getBinaryName(e).toString())
             .collect(Collectors.toList());
 

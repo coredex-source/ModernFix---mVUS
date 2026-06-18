@@ -11,6 +11,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.RandomState;
+import org.embeddedt.modernfix.annotation.IgnoreMixin;
 import org.embeddedt.modernfix.chunk.ExtendedPalettedContainer;
 import org.embeddedt.modernfix.world.gen.ExtendedSurfaceContext;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,6 +23,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Mixin(NoiseBasedChunkGenerator.class)
+@IgnoreMixin
 public class NoiseBasedChunkGeneratorMixin {
     @SuppressWarnings("unchecked")
     private static void mfix$accumulate(Set<ResourceKey<Biome>> chunkBiomes, LevelChunkSection section) {

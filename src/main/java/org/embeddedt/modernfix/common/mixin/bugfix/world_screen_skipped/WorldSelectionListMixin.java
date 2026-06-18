@@ -18,7 +18,7 @@ public class WorldSelectionListMixin {
 
     @Inject(method = "*", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/worldselection/WorldSelectionList$WorldListEntry;doDeleteWorld()V", ordinal = 0, shift = At.Shift.AFTER), cancellable = true)
     private void preventClosingCreateScreenAfterDelete(CallbackInfo ci) {
-        if(minecraft.screen instanceof CreateWorldScreen)
+        if(minecraft.gui.screen() instanceof CreateWorldScreen)
             ci.cancel();
     }
 }

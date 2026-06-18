@@ -11,7 +11,7 @@ loaderVersion = "[1,)" #mandatory This is typically bumped every Minecraft versi
 # Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.
 license = "GNU LGPL 3.0"
 # A URL to refer people to when problems occur with this mod
-issueTrackerURL="https://github.com/embeddedt/ModernFix/issues" #optional
+issueTrackerURL="https://github.com/coredex-source/ModernFix---mVUS/issues" #optional
 
 [[mixins]]
 config="modernfix-modernfix.mixins.json"
@@ -26,13 +26,13 @@ displayName = "ModernFix" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification <here>
 #updateJSONURL="http://myurl.me/" #optional
 # A URL for the "homepage" for this mod, displayed in the mod UI
-displayURL="https://modrinth.com/mod/modernfix" #optional
+displayURL="https://modrinth.com/mod/modernfix-mvus" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="icon.png" #optional
 # A text field displayed in the mod UI
 #credits="Thanks for this example mod goes to Java" #optional
 # A text field displayed in the mod UI
-authors="embeddedt" #optional
+authors="embeddedt, coredex-source" #optional
 # The description text for the mod (multi line!) (#mandatory)
 description = '''
 Egregious, yet effective performance improvements for modern Minecraft

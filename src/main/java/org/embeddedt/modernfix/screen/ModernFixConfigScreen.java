@@ -37,7 +37,7 @@ public class ModernFixConfigScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(lastScreen);
+        this.minecraft.gui.setScreen(lastScreen);
     }
 
     @Override

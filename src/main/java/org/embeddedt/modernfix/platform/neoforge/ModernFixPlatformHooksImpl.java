@@ -12,7 +12,6 @@ import net.neoforged.fml.ModLoader;
 import net.neoforged.fml.ModLoadingIssue;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.FMLPaths;
-import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.fml.loading.TracingPrintStream;
 import net.neoforged.fml.loading.moddiscovery.ModInfo;
 import net.neoforged.neoforge.common.NeoForge;
@@ -63,7 +62,7 @@ public class ModernFixPlatformHooksImpl implements ModernFixPlatformHooks {
     }
 
     public boolean isEarlyLoadingNormally() {
-        var issues = LoadingModList.get().getModLoadingIssues();
+        var issues = FMLLoader.getCurrent().getLoadingModList().getModLoadingIssues();
         if (issues.isEmpty()) {
             return true;
         }
@@ -108,7 +107,7 @@ public class ModernFixPlatformHooksImpl implements ModernFixPlatformHooks {
     public Multimap<String, String> getCustomModOptions() {
         if(modOptions == null) {
             modOptions = ArrayListMultimap.create();
-            for (ModInfo meta : LoadingModList.get().getMods()) {
+            for (ModInfo meta : FMLLoader.getCurrent().getLoadingModList().getMods()) {
                 meta.getConfigElement(IntegrationConstants.INTEGRATIONS_KEY).ifPresent(optionsObj -> {
                     if(optionsObj instanceof Map) {
                         Map<Object, Object> options = (Map<Object, Object>)optionsObj;

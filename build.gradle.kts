@@ -1,5 +1,5 @@
 plugins {
-    id("net.neoforged.moddev") version("2.0.140")
+    id("net.neoforged.moddev") version("2.0.141")
     id("me.modmuss50.mod-publish-plugin") version("1.1.0")
 }
 

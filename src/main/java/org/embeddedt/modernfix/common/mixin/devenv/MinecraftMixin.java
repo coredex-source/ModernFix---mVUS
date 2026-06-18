@@ -16,7 +16,7 @@ public class MinecraftMixin {
      * @reason avoid exception stacktrace being printed in dev
      */
     @Overwrite
-    private UserApiService createUserApiService(YggdrasilAuthenticationService yggdrasilAuthenticationService, GameConfig arg) {
+    private static UserApiService createUserApiService(YggdrasilAuthenticationService yggdrasilAuthenticationService, GameConfig arg) {
         return UserApiService.OFFLINE;
     }
 }

@@ -3,6 +3,7 @@ package org.embeddedt.modernfix.common.mixin.perf.worldgen_allocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.biome.Biome;
+import org.embeddedt.modernfix.annotation.IgnoreMixin;
 import org.embeddedt.modernfix.world.gen.PositionalBiomeGetter;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,6 +14,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @Mixin(targets = {"net/minecraft/world/level/levelgen/SurfaceRules$Context"}, priority = 100)
+@IgnoreMixin
 public class SurfaceRulesContextMixin {
     @Shadow private long lastUpdateY;
 
