@@ -63,7 +63,7 @@ public class SurfaceRulesContextMixin {
      * @reason Reuse a single positional getter object for biome lookups
      */
     @Overwrite
-    protected Holder<Biome> getBiome() {
+    public Holder<Biome> getBiome() {
         var biome = this.biome;
         if(biome == null) {
             var getter = this.modernfix$biomeCache;
