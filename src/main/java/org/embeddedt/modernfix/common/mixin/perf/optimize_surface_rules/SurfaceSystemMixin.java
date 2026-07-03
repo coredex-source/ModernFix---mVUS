@@ -36,11 +36,18 @@ public class SurfaceSystemMixin {
                                                               @Local(ordinal = 0, argsOnly = true) BiomeManager manager,
                                                               @Local(ordinal = 0, argsOnly = true) ChunkAccess chunk,
                                                               @Share("chunkBiomeLookup") LocalRef<ChunkBiomeLookup> lookupRef) {
-        var lookup = MFIX_LOOKUP_CACHE.get();
-        BiomeManagerAccessor accessor = (BiomeManagerAccessor)manager;
-        lookup.prepare(accessor.mfix$getBiomeSource(), accessor.mfix$getZoomSeed(), chunk, manager);
-        lookupRef.set(lookup);
-        return lookup;
+        // If mods use their own BiomeManager subclass, we cannot trust them to use the same blurring as vanilla,
+        // so we cannot apply our optimized path
+        if (manager.getClass() == BiomeManager.class) {
+            var lookup = MFIX_LOOKUP_CACHE.get();
+            BiomeManagerAccessor accessor = (BiomeManagerAccessor)manager;
+            lookup.prepare(accessor.mfix$getBiomeSource(), accessor.mfix$getZoomSeed(), chunk, manager);
+            lookupRef.set(lookup);
+            return lookup;
+        } else {
+            lookupRef.set(null);
+            return biomeGetter;
+        }
     }
 
     @Inject(method = "buildSurface", at = @At("TAIL"))
@@ -54,7 +61,12 @@ public class SurfaceSystemMixin {
 
     @Redirect(method = "buildSurface", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/BiomeManager;getBiome(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/Holder;"))
     private Holder<Biome> useFasterLookup(BiomeManager instance, BlockPos pos, @Share("chunkBiomeLookup") LocalRef<ChunkBiomeLookup> lookupRef) {
-        return lookupRef.get().apply(pos);
+        var lookup = lookupRef.get();
+        if (lookup != null) {
+            return lookup.apply(pos);
+        } else {
+            return instance.getBiome(pos);
+        }
     }
 
     @Inject(method = "buildSurface", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/SurfaceRules$Context;<init>(Lnet/minecraft/world/level/levelgen/SurfaceSystem;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/levelgen/NoiseChunk;Ljava/util/function/Function;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;Ljava/util/Set;)V"))
