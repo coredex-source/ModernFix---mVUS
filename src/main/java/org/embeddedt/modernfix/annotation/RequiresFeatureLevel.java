@@ -5,11 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Marks a mixin class as requiring a specific mod to be present (or absent with ! prefix).
- */
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.TYPE, ElementType.PACKAGE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface RequiresMod {
-    String value();
+public @interface RequiresFeatureLevel {
+    FeatureLevel value() default FeatureLevel.GA;
 }
