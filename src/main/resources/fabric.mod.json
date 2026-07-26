@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "modernfix",
   "version": "${version}",
-  "name": "ModernFix",
+  "name": "ModernFix-mVUS",
   "description": "Egregious, yet effective performance improvements for modern Minecraft",
   "authors": [
-    "embeddedt"
+    "embeddedt", "coredex-source"
   ],
   "contact": {
     "sources": "https://github.com/coredex-source/ModernFix---mVUS",
