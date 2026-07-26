@@ -50,11 +50,6 @@ public class SurfaceSystemMixin {
         }
     }
 
-    @Inject(method = "buildSurface", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/SurfaceRules$RuleSource;apply(Ljava/lang/Object;)Ljava/lang/Object;", ordinal = 0))
-    private void injectBiomesOnContext(CallbackInfo ci, @Local(ordinal = 0) SurfaceRules.Context surfacerules$context) {
-        ((ExtendedSurfaceContext)(Object) surfacerules$context).mfix$applyPossibleBiomes();
-    }
-
     @Inject(method = "buildSurface", at = @At("TAIL"))
     private void finishAndDisposeLookups(RandomState randomState, BiomeManager biomeManager, boolean p_224652_, WorldGenerationContext context, ChunkAccess chunk, NoiseChunk noiseChunk, SurfaceRules.RuleSource ruleSource, Set<Holder<Biome>> possibleBiomes, CallbackInfo ci) {
         MFIX_LOOKUP_CACHE.get().dispose();
