@@ -1,0 +1,71 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "AuditClient",
+      "presentation": {
+        "group": "Mod Development - modernfix",
+        "order": 0
+      },
+      "projectName": "modernfix",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@/home/coredex/Documents/GitHub/ModernFix---mVUS/build/moddev/auditClientRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@/home/coredex/Documents/GitHub/ModernFix---mVUS/build/moddev/auditClientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dmodernfix%%/home/coredex/Documents/GitHub/ModernFix---mVUS/bin/main"
+      ],
+      "cwd": "${workspaceFolder}/run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Client",
+      "presentation": {
+        "group": "Mod Development - modernfix",
+        "order": 1
+      },
+      "projectName": "modernfix",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@/home/coredex/Documents/GitHub/ModernFix---mVUS/build/moddev/clientRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@/home/coredex/Documents/GitHub/ModernFix---mVUS/build/moddev/clientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dmodernfix%%/home/coredex/Documents/GitHub/ModernFix---mVUS/bin/main"
+      ],
+      "cwd": "${workspaceFolder}/run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Server",
+      "presentation": {
+        "group": "Mod Development - modernfix",
+        "order": 2
+      },
+      "projectName": "modernfix",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@/home/coredex/Documents/GitHub/ModernFix---mVUS/build/moddev/serverRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@/home/coredex/Documents/GitHub/ModernFix---mVUS/build/moddev/serverRunVmArgs.txt",
+        "-Dfml.modFolders\u003dmodernfix%%/home/coredex/Documents/GitHub/ModernFix---mVUS/bin/main"
+      ],
+      "cwd": "${workspaceFolder}/run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    }
+  ]
+}
