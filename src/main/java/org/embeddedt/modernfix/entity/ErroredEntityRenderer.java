@@ -15,7 +15,7 @@ public class ErroredEntityRenderer<T extends Entity> extends EntityRenderer<T, E
     }
 
     @Override
-    public boolean shouldRender(T livingEntity, Frustum camera, double camX, double camY, double camZ) {
+    public boolean shouldRender(T livingEntity, Frustum camera, double camX, double camY, double camZ, float partialTick) {
         return false;
     }
 
