@@ -65,9 +65,7 @@
     "perf.thread_priorities.UtilMixin",
     "perf.ticking_chunk_alloc.BatMixin",
     "perf.ticking_chunk_alloc.ChunkAccessMixin",
-    "perf.worldgen_allocation.NoiseChunkMixin",
-    "perf.worldgen_allocation.SequenceRuleMixin",
-    "perf.worldgen_allocation.SurfaceRulesContextMixin"
+    "perf.worldgen_allocation.NoiseChunkMixin"
   ],
   "client": [
     "bugfix.concurrency.MinecraftMixin",

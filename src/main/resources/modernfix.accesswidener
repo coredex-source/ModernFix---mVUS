@@ -10,10 +10,6 @@ accessible field net/minecraft/world/level/Level blockEntityTickers Ljava/util/L
 
 accessible method net/minecraft/nbt/CompoundTag <init> (Ljava/util/Map;)V
 
-accessible class net/minecraft/world/level/levelgen/SurfaceRules$SequenceRule
-accessible class net/minecraft/world/level/levelgen/SurfaceRules$SurfaceRule
-accessible class net/minecraft/world/level/levelgen/SurfaceRules$Context
-
 accessible class net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache
 accessible class net/minecraft/server/level/ServerChunkCache$MainThreadExecutor
 accessible field net/minecraft/world/level/block/state/BlockBehaviour properties Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
@@ -48,9 +44,6 @@ accessible method net/minecraft/client/resources/model/BlockStateDefinitions def
 accessible field net/minecraft/client/resources/model/BlockStateDefinitions STATIC_DEFINITIONS Ljava/util/Map;
 
 accessible class net/minecraft/client/multiplayer/ClientChunkCache$Storage
-
-accessible class net/minecraft/world/level/levelgen/SurfaceRules$SequenceRule
-accessible class net/minecraft/world/level/levelgen/SurfaceRules$SurfaceRule
 
 accessible class net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase$Cache
 accessible class net/minecraft/server/level/ServerChunkCache$MainThreadExecutor
