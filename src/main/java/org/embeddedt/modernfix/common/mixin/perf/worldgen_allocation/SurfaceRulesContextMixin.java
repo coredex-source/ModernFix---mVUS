@@ -42,7 +42,7 @@ public class SurfaceRulesContextMixin {
      * @reason Reuse supplier object instead of creating new ones every time
      */
     @Overwrite
-    protected void updateY(int stoneDepthAbove, int stoneDepthBelow, int waterHeight, int blockY) {
+    public void updateY(int stoneDepthAbove, int stoneDepthBelow, int waterHeight, int blockY) {
         ++this.lastUpdateY;
 
         var getter = this.modernfix$biomeCache;
