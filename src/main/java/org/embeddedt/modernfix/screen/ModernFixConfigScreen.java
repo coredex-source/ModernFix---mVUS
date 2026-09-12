@@ -1,11 +1,13 @@
 package org.embeddedt.modernfix.screen;
 
+import com.mojang.blaze3d.Blaze3D;
+
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Util;
+import java.net.URI;
 
 public class ModernFixConfigScreen extends Screen {
     private OptionList optionList;
@@ -26,7 +28,7 @@ public class ModernFixConfigScreen extends Screen {
         this.optionList.setScrollAmount(lastScrollAmount);
         this.addWidget(this.optionList);
         this.wikiButton = new Button.Builder(Component.translatable("modernfix.config.wiki"), (arg) -> {
-            Util.getPlatform().openUri("https://github.com/embeddedt/ModernFix/wiki/Summary-of-Patches");
+            Blaze3D.openUri(URI.create("https://github.com/embeddedt/ModernFix/wiki/Summary-of-Patches"));
         }).pos(this.width / 2 - 155, this.height - 29).size(150, 20).build();
         this.doneButton = new Button.Builder(CommonComponents.GUI_DONE, (arg) -> {
             this.onClose();
