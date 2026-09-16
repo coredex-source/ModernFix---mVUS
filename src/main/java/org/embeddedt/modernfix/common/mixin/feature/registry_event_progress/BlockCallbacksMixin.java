@@ -1,8 +1,6 @@
 package org.embeddedt.modernfix.common.mixin.feature.registry_event_progress;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.sugar.Share;
-import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.fml.loading.progress.ProgressMeter;
@@ -11,6 +9,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,6 +21,9 @@ public class BlockCallbacksMixin {
     @Shadow @Final @Mutable
     private Set<Block> addedBlocks;
 
+    @Unique
+    private ProgressMeter modernfix$bakeProgress;
+
     /**
      * @author embeddedt
      * @reason Use an ordered set to make the baking order more predictable for users watching the splash screen
@@ -32,19 +34,20 @@ public class BlockCallbacksMixin {
     }
 
     @Inject(method = "onBake", at = @At("HEAD"))
-    private void startBakeProgress(CallbackInfo ci, @Share("meter") LocalRef<ProgressMeter> meter) {
-        meter.set(StartupNotificationManager.prependProgressBar("Build blockstate caches", addedBlocks.size()));
+    private void startBakeProgress(CallbackInfo ci) {
+        this.modernfix$bakeProgress = StartupNotificationManager.prependProgressBar("Build blockstate caches", addedBlocks.size());
     }
 
-    @Inject(method = "onBake", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;getStateDefinition()Lnet/minecraft/world/level/block/state/StateDefinition;", ordinal = 0))
-    private void showBakeProgressPerBlock(CallbackInfo ci, @Local(ordinal = 0) Block block, @Share("meter") LocalRef<ProgressMeter> meter) {
+    @Inject(method = "lambda$onBake$0", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;getStateDefinition()Lnet/minecraft/world/level/block/state/StateDefinition;", ordinal = 0))
+    private void showBakeProgressPerBlock(CallbackInfo ci, @Local(ordinal = 0) Block block) {
         var id = block.builtInRegistryHolder().getKey().identifier();
-        meter.get().label("Build blockstate caches - " + id.toString());
-        meter.get().increment();
+        this.modernfix$bakeProgress.label("Build blockstate caches - " + id.toString());
+        this.modernfix$bakeProgress.increment();
     }
 
-    @Inject(method = "onBake", at = @At(value = "INVOKE", target = "Ljava/util/Set;clear()V", ordinal = 0))
-    private void stopBakeProgress(CallbackInfo ci, @Share("meter") LocalRef<ProgressMeter> meter) {
-        meter.get().complete();
+    @Inject(method = "lambda$onBake$0", at = @At(value = "INVOKE", target = "Ljava/util/Set;clear()V", ordinal = 0))
+    private void stopBakeProgress(CallbackInfo ci) {
+        this.modernfix$bakeProgress.complete();
+        this.modernfix$bakeProgress = null;
     }
 }

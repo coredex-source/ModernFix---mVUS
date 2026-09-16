@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Mixin;
 public class VanillaRegistriesMixin {
     private static HolderLookup.Provider STATIC_PROVIDER;
 
-    @WrapMethod(method = "createLookup")
+    @WrapMethod(method = "createWorldLookup")
     private static HolderLookup.Provider modernfix$memoizeLookup(Operation<HolderLookup.Provider> original) {
         synchronized (VanillaRegistries.class) {
             if (STATIC_PROVIDER == null) {

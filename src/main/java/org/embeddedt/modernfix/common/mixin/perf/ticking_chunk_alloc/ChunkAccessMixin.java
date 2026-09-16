@@ -11,7 +11,7 @@ import java.util.Map;
 
 @Mixin(value = ChunkAccess.class, priority = 800)
 public class ChunkAccessMixin {
-    @Shadow @Final private Map<?, ?> structuresRefences;
+    @Shadow @Final private Map<?, ?> structureReferences;
     private Map<?, ?> mfix$structureRefsView;
 
     /**
@@ -24,12 +24,12 @@ public class ChunkAccessMixin {
      */
     @Overwrite
     public Map<?, ?> getAllReferences() {
-        if(this.structuresRefences.isEmpty()) {
+        if(this.structureReferences.isEmpty()) {
             return Collections.emptyMap();
         }
         Map<?, ?> view = this.mfix$structureRefsView;
         if(view == null) {
-            this.mfix$structureRefsView = view = Collections.unmodifiableMap(this.structuresRefences);
+            this.mfix$structureRefsView = view = Collections.unmodifiableMap(this.structureReferences);
         }
         return view;
     }

@@ -11,9 +11,9 @@ import net.minecraft.world.level.chunk.BlockColumn;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.NoiseChunk;
 import net.minecraft.world.level.levelgen.RandomState;
-import net.minecraft.world.level.levelgen.SurfaceRules;
-import net.minecraft.world.level.levelgen.SurfaceSystem;
 import net.minecraft.world.level.levelgen.WorldGenerationContext;
+import net.minecraft.world.level.levelgen.material.MaterialSystem;
+import net.minecraft.world.level.levelgen.material.rule.MaterialRule;
 import org.embeddedt.modernfix.world.gen.ChunkBiomeLookup;
 import org.embeddedt.modernfix.world.gen.PrefetchingBlockColumn;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,12 +26,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Set;
 import java.util.function.Function;
 
-@Mixin(value = SurfaceSystem.class, priority = 2000)
+@Mixin(value = MaterialSystem.class, priority = 2000)
 public class SurfaceSystemMixin {
     private static final ThreadLocal<ChunkBiomeLookup> MFIX_LOOKUP_CACHE = ThreadLocal.withInitial(ChunkBiomeLookup::new);
     private static final ThreadLocal<PrefetchingBlockColumn> MFIX_BLOCK_COLUMN = new ThreadLocal<>();
 
-    @ModifyArg(method = "buildSurface", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/SurfaceRules$Context;<init>(Lnet/minecraft/world/level/levelgen/SurfaceSystem;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/levelgen/NoiseChunk;Ljava/util/function/Function;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;Ljava/util/Set;)V"), index = 4)
+    @ModifyArg(method = "buildSurface", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/material/MaterialRuleContext;<init>(Lnet/minecraft/world/level/levelgen/material/MaterialSystem;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/levelgen/densityfunction/DensityVolume;Lnet/minecraft/world/level/levelgen/densityfunction/DensitySamplerSet;Ljava/util/function/Function;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;Ljava/util/Set;)V"), index = 4)
     private Function<BlockPos, Holder<Biome>> useFasterLookup(Function<BlockPos, Holder<Biome>> biomeGetter,
                                                               @Local(ordinal = 0, argsOnly = true) BiomeManager manager,
                                                               @Local(ordinal = 0, argsOnly = true) ChunkAccess chunk,
@@ -51,7 +51,7 @@ public class SurfaceSystemMixin {
     }
 
     @Inject(method = "buildSurface", at = @At("TAIL"))
-    private void finishAndDisposeLookups(RandomState randomState, BiomeManager biomeManager, boolean p_224652_, WorldGenerationContext context, ChunkAccess chunk, NoiseChunk noiseChunk, SurfaceRules.RuleSource ruleSource, Set<Holder<Biome>> possibleBiomes, CallbackInfo ci) {
+    private void finishAndDisposeLookups(RandomState randomState, BiomeManager biomeManager, WorldGenerationContext context, ChunkAccess chunk, NoiseChunk noiseChunk, MaterialRule rule, Set<Holder<Biome>> possibleBiomes, CallbackInfo ci) {
         MFIX_LOOKUP_CACHE.get().dispose();
         var column = MFIX_BLOCK_COLUMN.get();
         if (column != null) {
@@ -69,7 +69,7 @@ public class SurfaceSystemMixin {
         }
     }
 
-    @Inject(method = "buildSurface", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/SurfaceRules$Context;<init>(Lnet/minecraft/world/level/levelgen/SurfaceSystem;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/levelgen/NoiseChunk;Ljava/util/function/Function;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;Ljava/util/Set;)V"))
+    @Inject(method = "buildSurface", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/material/MaterialRuleContext;<init>(Lnet/minecraft/world/level/levelgen/material/MaterialSystem;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/levelgen/densityfunction/DensityVolume;Lnet/minecraft/world/level/levelgen/densityfunction/DensitySamplerSet;Ljava/util/function/Function;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;Ljava/util/Set;)V"))
     private void captureRealBlockColumn(CallbackInfo ci, @Local(ordinal = 0) LocalRef<BlockColumn> column,
                                         @Local(ordinal = 0, argsOnly = true) ChunkAccess chunk,
                                         @Share("prefetchColumn") LocalRef<PrefetchingBlockColumn> prefetchRef) {
@@ -83,8 +83,8 @@ public class SurfaceSystemMixin {
     }
 
     @Inject(method = "buildSurface", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos$MutableBlockPos;setZ(I)Lnet/minecraft/core/BlockPos$MutableBlockPos;", ordinal = 0, shift = At.Shift.AFTER))
-    private void prefetchBlockArray(RandomState randomState, BiomeManager biomeManager, boolean p_224652_,
-                                    WorldGenerationContext context, ChunkAccess chunk, NoiseChunk noiseChunk, SurfaceRules.RuleSource ruleSource, Set<Holder<Biome>> possibleBiomes, CallbackInfo ci,
+    private void prefetchBlockArray(RandomState randomState, BiomeManager biomeManager,
+                                    WorldGenerationContext context, ChunkAccess chunk, NoiseChunk noiseChunk, MaterialRule rule, Set<Holder<Biome>> possibleBiomes, CallbackInfo ci,
                                     @Local(ordinal = 0) BlockColumn column,
                                     @Local(ordinal = 0) BlockPos.MutableBlockPos cursor) {
         ((PrefetchingBlockColumn)column).prefetch(chunk, cursor.getX() & 15, cursor.getZ() & 15);

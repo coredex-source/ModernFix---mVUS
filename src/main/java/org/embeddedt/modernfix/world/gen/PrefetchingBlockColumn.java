@@ -118,7 +118,8 @@ public class PrefetchingBlockColumn implements BlockColumn {
             if (oldState.isAir() != state.isAir()) {
                 updateHeightmap(Heightmap.Types.WORLD_SURFACE_WG, y, state);
             }
-            if (oldState.blocksMotion() != state.blocksMotion()) {
+            var oceanFloorPredicate = Heightmap.Types.OCEAN_FLOOR_WG.isOpaque();
+            if (oceanFloorPredicate.test(oldState) != oceanFloorPredicate.test(state)) {
                 updateHeightmap(Heightmap.Types.OCEAN_FLOOR_WG, y, state);
             }
         }

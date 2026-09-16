@@ -21,7 +21,7 @@ base.archivesName = "modernfix-neoforge"
 neoForge {
     enable {
         version = rootProject.properties["forge_version"].toString()
-        isDisableRecompilation = System.getenv("CI") == "true"
+        isDisableRecompilation = minecraft_version.startsWith("26.3") || System.getenv("CI") == "true"
     }
 
     rootProject.properties["parchment_version"]?.let { parchmentVer ->
@@ -118,7 +118,6 @@ dependencies {
     compileOnly("curse.maven:cofhcore-69162:5374122")
     compileOnly("curse.maven:resourcefullib-570073:5659871")
     compileOnly("curse.maven:kubejs-238086:5853326")
-    compileOnly("curse.maven:terrablender-neoforge-940057:8046313")
 }
 
 tasks.named<Jar>("jar") {

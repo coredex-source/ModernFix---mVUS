@@ -7,13 +7,14 @@ import net.minecraft.util.LinearCongruentialGenerator;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.biome.BiomeResolver;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 import java.util.Arrays;
 import java.util.function.Function;
 
 /**
- * Drop-in replacement for {@code biomeManager::getBiome} in SurfaceSystem.buildSurface.
+ * Drop-in replacement for {@code biomeManager::getBiome} in MaterialSystem.buildSurface.
  *
  * <p>Pre-computes the Voronoi bias (fiddle) values and quart-resolution biome data for an
  * entire chunk, then uses two optimizations:
@@ -43,7 +44,7 @@ public class ChunkBiomeLookup implements Function<BlockPos, Holder<Biome>> {
      * @param biomeZoomSeed the obfuscated biome zoom seed from BiomeManager
      */
     @SuppressWarnings("unchecked")
-    public void prepare(BiomeManager.NoiseBiomeSource source, long biomeZoomSeed, ChunkAccess chunk, BiomeManager fallback) {
+    public void prepare(BiomeResolver source, long biomeZoomSeed, ChunkAccess chunk, BiomeManager fallback) {
         int chunkMinX = chunk.getPos().getMinBlockX();
         int chunkMinZ = chunk.getPos().getMinBlockZ();
         int minBuildHeight = chunk.getMinY();
@@ -105,7 +106,7 @@ public class ChunkBiomeLookup implements Function<BlockPos, Holder<Biome>> {
         this.fallbackManager = null;
     }
 
-    private boolean fetchBiomes(BiomeManager.NoiseBiomeSource source) {
+    private boolean fetchBiomes(BiomeResolver source) {
         var biomes = this.biomes;
         Holder<Biome> firstSeen = null;
         boolean seenMultiple = false;
