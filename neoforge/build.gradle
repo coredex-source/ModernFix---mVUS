@@ -30,7 +30,7 @@ repositories {
             includeGroup "extra-mods"
         }
     }
-    maven { url "https://maven.neoforged.net" }
+    maven { url "https://maven.neoforged.net/releases/" }
     if(rootProject.hasProperty("neoforge_pr")) {
         maven {
             url 'https://prmaven.neoforged.net/NeoForge/pr' + rootProject.neoforge_pr
