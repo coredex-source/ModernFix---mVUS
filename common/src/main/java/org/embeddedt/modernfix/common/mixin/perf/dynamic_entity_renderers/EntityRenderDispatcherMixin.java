@@ -26,7 +26,7 @@ public class EntityRenderDispatcherMixin {
     @Inject(method = "getRenderer", at = @At("RETURN"), cancellable = true)
     private <T extends Entity> void checkNullness(T entity, CallbackInfoReturnable<EntityRenderer<? super T, ?>> cir) {
         // apparently some mods yeet the renderers map and cause issues
-        if(cir.getReturnValue() == null)
+        if(cir.getReturnValue() == null && this.mfix$dynamicRenderers != null)
             cir.setReturnValue((EntityRenderer<? super T, ?>)mfix$dynamicRenderers.get(entity.getType()));
     }
 
