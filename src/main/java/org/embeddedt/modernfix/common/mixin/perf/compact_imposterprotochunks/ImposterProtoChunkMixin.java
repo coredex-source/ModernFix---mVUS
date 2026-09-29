@@ -15,7 +15,7 @@ public abstract class ImposterProtoChunkMixin extends ChunkAccessMixin {
      * a bit of memory
      */
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void replaceDuplicateObjects(LevelChunk wrapped, boolean allowWrites, CallbackInfo ci) {
+    private void replaceDuplicateObjects(LevelChunk wrapped, CallbackInfo ci) {
         this.sections = wrapped.getSections();
         this.skyLightSources = wrapped.getSkyLightSources();
     }
