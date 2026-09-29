@@ -1,5 +1,6 @@
 package org.embeddedt.modernfix.screen;
 
+import net.minecraft.client.gui.components.debug.DebugGroup;
 import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.gui.components.debug.DebugScreenEntry;
 import net.minecraft.resources.Identifier;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class ModernFixDebugScreen {
     public static final Identifier MODERNFIX_GROUP = Identifier.fromNamespaceAndPath(ModernFix.MODID, "modernfix_info");
+    public static final DebugGroup MODERNFIX_DEBUG_GROUP = DebugGroup.Builder.titleless().build();
     public static Identifier MODERNFIX_ENTRY = DebugScreenEntriesInvoker.mfix$register(
             MODERNFIX_GROUP,
             new ModernFixDebugEntry()
@@ -20,7 +22,7 @@ public class ModernFixDebugScreen {
     static class ModernFixDebugEntry implements DebugScreenEntry {
         @Override
         public void display(DebugScreenDisplayer displayer, @Nullable Level level, @Nullable LevelChunk clientChunk, @Nullable LevelChunk serverChunk) {
-            displayer.addToGroup(MODERNFIX_GROUP, ModernFixClient.INSTANCE.brandingString);
+            displayer.addToGroup(MODERNFIX_DEBUG_GROUP, ModernFixClient.INSTANCE.brandingString);
         }
 
         @Override
