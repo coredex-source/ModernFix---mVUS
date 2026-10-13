@@ -17,7 +17,7 @@ public class MixinClientNeoForgeMod {
      * @author embeddedt
      * @reason avoid triggering eager load of every item model
      */
-    @Redirect(method = "lambda$new$7", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/ModelManager;getItemModel(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/item/ItemModel;"))
+    @Redirect(method = "lambda$new$6", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/ModelManager;getItemModel(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/item/ItemModel;"))
     private static ItemModel checkExistenceWithoutLoadingModel(ModelManager instance, Identifier id) {
         if (!((ModelManagerAccessor)instance).mfix$getBakedItemModels().containsKey(id)) {
             ModernFix.LOGGER.warn("Missing item model '{}'", id);
